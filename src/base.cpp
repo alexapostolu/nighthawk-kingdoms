@@ -218,7 +218,7 @@ void Base::display_shop()
 	}
 }
 
-void Base::handle_mouse_on_shop(int x, int y)
+void Base::handle_mouse_pressed(int x, int y)
 {
 	if (shop_state == ShopState::HIDDEN)
 	{
@@ -292,4 +292,19 @@ void Base::handle_mouse_on_shop(int x, int y)
 			}
 		}
 	}
+}
+
+void Base::handle_mouse_released(int x, int y)
+{
+	// have a variable movement:
+	// 1 - mouse dragged, move building with mouse
+	// 2 - mouse not dragged, keep building in place
+	if (placement_state == 1)
+	{
+		
+	}
+	else if (placement_state == 2)
+	{
+	}
+	
 }
