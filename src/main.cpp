@@ -55,10 +55,13 @@ int main(int argc, char* argv[])
 
 				std::cout << "mouse pos: " << x << ' ' << y << '\n';
 
-				Base::get().handle_mouse_on_shop(x, y);
+				Base::get().handle_mouse_pressed(x, y);
 				tutorial = false;
 				
 				break;
+			}
+			case SDL_MOUSEBUTTONUP: {
+				Base::get().handle_mouse_released(x, y);
 			}
 			case SDL_QUIT:
 				goto END_SDL;

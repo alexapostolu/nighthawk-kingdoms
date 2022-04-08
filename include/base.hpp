@@ -25,8 +25,9 @@ public:
 	void display_scene();
     void display_shop();
 
-    void handle_mouse_on_shop(int x, int y);
-
+    void handle_mouse_pressed(int x, int y);
+	void handle_mouse_released(int x, int y);
+	
 public:
 	int gold, wheat, wood, stone, gems;
 	int level, exp, troph;
