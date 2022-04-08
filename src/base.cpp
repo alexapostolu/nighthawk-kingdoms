@@ -110,9 +110,7 @@ void Base::display_scene()
 		for (int i = 0; i < TILES_Y; ++i)
 		{
 			for (int j = 0; j < TILES_X; ++j)
-			{
 				Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20, sdl2::clr_clear, sdl2::clr_white);
-			}
 		}
 	}
 
@@ -153,8 +151,8 @@ void Base::display_scene()
 		Screen::get().image(img, dim.x, dim.y, dim.w, dim.h, sdl2::Align::CENTER);
 
 		int const base = dim.y + (dim.h / 2);
-		//Screen::get().image("checkmark.png", dim.x - 40, base + 30, 40, 40, sdl2::Align::CENTER);
-		//Screen::get().image("x.png",		 dim.x + 40, base + 30, 40, 40, sdl2::Align::CENTER);
+		Screen::get().image("checkmark.png", dim.x - 40, base + 30, 40, 40, sdl2::Align::CENTER);
+		Screen::get().image("x.png",		 dim.x + 40, base + 30, 40, 40, sdl2::Align::CENTER);
 	}
 }
 

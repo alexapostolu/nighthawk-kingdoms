@@ -150,10 +150,7 @@ void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Ali
 	{
 		sdl2::surface_ptr image(IMG_Load(std::string("../assets/" + img).c_str()));
 		if (image == nullptr)
-		{
 			std::cout << "[error] - image '" + img + "' could not load\n";
-			system("dir");
-		}
 
 		images[img] = sdl2::texture_ptr(SDL_CreateTextureFromSurface(renderer.get(), image.get()));
 	}
