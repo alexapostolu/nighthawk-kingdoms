@@ -143,6 +143,24 @@ void Screen::text(std::string const& text, SDL_Color const& colour, std::string 
 	SDL_RenderCopy(renderer.get(), text_texture.get(), NULL, &text_rect);
 }
 
+std::pair<int, int> get_img_dim(std::string const& img)
+{
+	auto const it = images.find(img);
+	if (it == images.end())
+	{
+		sdl2::surface_ptr image(IMG_Load(std::string("../assets/" + img).c_str()));
+		if (image == nullptr)
+			std::cout << "[error] - image '" + img + "' could not load\n";
+
+		images[img] = sdl2::texture_ptr(SDL_CreateTextureFromSurface(renderer.get(), image.get()));
+	}
+	
+	SDL_Point size;
+    SDL_QueryTexture(images[img].get(), NULL, NULL, &size.x, &size.y);
+
+	return { size.x, size.y };
+}
+
 void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Align alignment)
 {
 	auto const it = images.find(img);
