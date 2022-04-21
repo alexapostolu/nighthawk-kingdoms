@@ -105,6 +105,7 @@ void Base::display_scene()
 		}
 	}
 
+	// display tile grid when placing buildings
 	if (place != -1)
 	{
 		for (int i = 0; i < TILES_Y; ++i)
@@ -135,11 +136,14 @@ void Base::display_scene()
 	{
 		auto& [img, dim, cost_g, cost_w, cost_s] = base_buildings[place];
 
-		int x, y;
-		SDL_GetMouseState(&x, &y);
+		if (place_state == PlaceState::FOLLOW_MOUSE)
+		{
+			int x, y;
+			SDL_GetMouseState(&x, &y);
 
-		dim.x = ((x - 5) / 20) * 20 + 5;
-		dim.y = (y / 20) * 20;
+			dim.x = ((x - 5) / 20) * 20 + 5;
+			dim.y = (y / 20) * 20;
+		}
 
 		if (img == "road.png")
 		{
@@ -147,7 +151,22 @@ void Base::display_scene()
 			dim.y += 10;
 		}
 
-		Screen::get().rect(dim.x, dim.y, dim.w, dim.h, sdl2::clr_green, sdl2::clr_clear, sdl2::Align::CENTER);
+		bool can_place = true;
+		for (int i = (dim.x - dim.w / 2 - 5) / 20; i < (dim.x + dim.w / 2 - 5) / 20; ++i)
+		{
+			for (int j = (dim.y - dim.h / 2 - 60) / 20; j < (dim.y + dim.h / 2 - 60) / 20; ++j)
+			{
+				if (tiles[j][i].state == TileState::OCCUPIED)
+				{
+					can_place = false;
+					break;
+				}
+			}
+		}
+
+
+		Screen::get().rect(dim.x, dim.y, dim.w, dim.h, can_place ? sdl2::clr_green : sdl2::clr_red,
+			sdl2::clr_clear, sdl2::Align::CENTER);
 		Screen::get().image(img, dim.x, dim.y, dim.w, dim.h, sdl2::Align::CENTER);
 
 		int const base = dim.y + (dim.h / 2);
@@ -172,6 +191,8 @@ void Base::display_shop()
 
 			shop_y = Screen::get().SCREEN_HEIGHT;
 		}
+
+		shop_y = Screen::get().SCREEN_HEIGHT;
 
 		break;
 	}
@@ -220,51 +241,62 @@ void Base::handle_mouse_pressed(int x, int y)
 {
 	if (shop_state == ShopState::HIDDEN)
 	{
-		if (text_build.clicked_on(x, y))
+		if (text_build.clicked_on(x, y) && place == -1)
 		{
-			place = -1;
 			shop_state = ShopState::APPEARING;
 		}
 		else if (place != -1)
 		{
-			auto const& [img, dim, cost_g, cost_w, cost_s] = base_buildings[place];
-			
-			if (img == "road.png")
-			{
-				tiles[(dim.y - 60) / 20][(dim.x - 5) / 20].state = TileState::PATH;
+			auto& [img, dim, cost_g, cost_w, cost_s] = base_buildings[place];
+			int const base = dim.y + (dim.h / 2);
 
-				gold -= cost_g;
-				wood -= cost_w;
-				stone -= cost_s;
-				place = -1;
-				return;
-			}
-
-			bool can_place = true;
-			for (int i = (dim.x - dim.w / 2 - 5) / 20; i < (dim.x + dim.w / 2 - 5) / 20; ++i)
+			if (std::sqrt(std::pow(x - (dim.x - 40), 2) + std::pow(y - (base+ 30), 2)) <= 20)
 			{
-				for (int j = (dim.y - dim.h / 2 - 60) / 20; j < (dim.y + dim.h / 2 - 60) / 20; ++j)
+				if (img == "road.png")
 				{
-					if (tiles[j][i].state == TileState::OCCUPIED)
-					{
-						can_place = false;
-						break;
-					}
-				}
-			}
+					tiles[(dim.y - 60) / 20][(dim.x - 5) / 20].state = TileState::PATH;
 
-			if (can_place)
-			{
+					gold -= cost_g;
+					wood -= cost_w;
+					stone -= cost_s;
+					place = -1;
+					return;
+				}
+
+				bool can_place = true;
 				for (int i = (dim.x - dim.w / 2 - 5) / 20; i < (dim.x + dim.w / 2 - 5) / 20; ++i)
 				{
 					for (int j = (dim.y - dim.h / 2 - 60) / 20; j < (dim.y + dim.h / 2 - 60) / 20; ++j)
-						tiles[j][i].state = TileState::OCCUPIED;
+					{
+						if (tiles[j][i].state == TileState::OCCUPIED)
+						{
+							can_place = false;
+							break;
+						}
+					}
 				}
 
-				gold -= cost_g;
-				wood -= cost_w;
-				stone -= cost_s;
+				if (can_place)
+				{
+					for (int i = (dim.x - dim.w / 2 - 5) / 20; i < (dim.x + dim.w / 2 - 5) / 20; ++i)
+					{
+						for (int j = (dim.y - dim.h / 2 - 60) / 20; j < (dim.y + dim.h / 2 - 60) / 20; ++j)
+							tiles[j][i].state = TileState::OCCUPIED;
+					}
+
+					gold -= cost_g;
+					wood -= cost_w;
+					stone -= cost_s;
+					place = -1;
+					place_state = PlaceState::STATIONERY;
+				}
+			}
+			else if (std::sqrt(std::pow(x - (dim.x + 40), 2) + std::pow(y - (base + 30), 2)) <= 20)
+			{
+				base_buildings.pop_back();
+
 				place = -1;
+				shop_state = ShopState::APPEARING;
 			}
 		}
 	}
@@ -275,7 +307,23 @@ void Base::handle_mouse_pressed(int x, int y)
 			shop_state = ShopState::DISAPPEARING;
 			return;
 		}
-		
+	}
+}
+
+void Base::handle_mouse_dragged(int x, int y)
+{
+	if (place != -1)
+	{
+		auto const& [img, dim, cost_g, cost_w, cost_s] = base_buildings[place];
+		if (x >= dim.x - (dim.w / 2) && x <= dim.x + (dim.w / 2) &&
+			y >= dim.y - (dim.h / 2) && y <= dim.y + (dim.h / 2))
+		{
+			place_state = PlaceState::FOLLOW_MOUSE;
+		}
+	}
+
+	if (shop_state == ShopState::VISIBLE)
+	{
 		for (auto const& building : shop_buildings)
 		{
 			auto const& [img, dim, cost_g, cost_w, cost_s] = building;
@@ -285,24 +333,25 @@ void Base::handle_mouse_pressed(int x, int y)
 				base_buildings.push_back({ img, { dim.x, dim.y, (int)(dim.w / 1.5), (int)(dim.h / 1.4) }, cost_g, cost_w, cost_s });
 				place = base_buildings.size() - 1;
 
+				place_state = PlaceState::FOLLOW_MOUSE;
 				shop_state = ShopState::HIDDEN;
-				return;
+				break;
 			}
 		}
+	}
+	else if (shop_state == ShopState::HIDDEN && place != -1 && place_state == PlaceState::FOLLOW_MOUSE)
+	{
+		auto& [img, dim, cost_g, cost_w, cost_s] = base_buildings[place];
+
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+
+		dim.x = ((x - 5) / 20) * 20 + 5;
+		dim.y = (y / 20) * 20;
 	}
 }
 
 void Base::handle_mouse_released(int x, int y)
 {
-	// have a variable movement:
-	// 1 - mouse dragged, move building with mouse
-	// 2 - mouse not dragged, keep building in place
-	if (placement_state == 1)
-	{
-		
-	}
-	else if (placement_state == 2)
-	{
-	}
-	
+	place_state = PlaceState::STATIONERY;
 }

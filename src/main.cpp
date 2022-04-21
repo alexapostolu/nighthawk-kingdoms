@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
 	SDL_PumpEvents();
 
 	int b = SDL_GetTicks(), frames = 0;
+	int c = SDL_GetTicks();
+	bool mouse_down = false;
 	bool tutorial = true;
 	while (true)
 	{
@@ -50,6 +52,9 @@ int main(int argc, char* argv[])
 				if (event.button.button != SDL_BUTTON_LEFT)
 					break;
 
+				c = SDL_GetTicks();
+				mouse_down = true;
+
 				int x, y;
 				SDL_GetMouseState(&x, &y);
 
@@ -61,13 +66,27 @@ int main(int argc, char* argv[])
 				break;
 			}
 			case SDL_MOUSEBUTTONUP: {
+				c = SDL_GetTicks();
+				mouse_down = false;
+
+				int x, y;
+				SDL_GetMouseState(&x, &y);
 				Base::get().handle_mouse_released(x, y);
+
+				break;
 			}
 			case SDL_QUIT:
 				goto END_SDL;
 			default:
 				break;
 			}
+		}
+
+		if (mouse_down && SDL_GetTicks() - c >= 100)
+		{
+			int x, y;
+			SDL_GetMouseState(&x, &y);
+			Base::get().handle_mouse_dragged(x, y);
 		}
 
 		if (tutorial)

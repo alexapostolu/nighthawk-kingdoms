@@ -26,6 +26,7 @@ public:
     void display_shop();
 
     void handle_mouse_pressed(int x, int y);
+    void handle_mouse_dragged(int x, int y);
 	void handle_mouse_released(int x, int y);
 	
 public:
@@ -43,6 +44,12 @@ public:
         DISAPPEARING
     } shop_state;
 
+    enum class PlaceState
+    {
+        STATIONERY,
+        FOLLOW_MOUSE
+    };
+
 private:
     Base();
 
@@ -52,6 +59,7 @@ private:
     std::vector<Building> base_buildings;
     // index of building being placed
     int place;
+    PlaceState place_state;
 
     sdl2::Text text_build;
 };
