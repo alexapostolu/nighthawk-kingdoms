@@ -20,6 +20,8 @@ public:
     Base(Base const&) = delete;
     void operator=(Base const&) = delete;
 
+    void set_building_dim();
+
 public:
     void display_resources();
 	void display_scene();
@@ -29,6 +31,12 @@ public:
     void handle_mouse_dragged(int x, int y);
 	void handle_mouse_released(int x, int y);
 	
+private:
+    Base();
+
+    // 0 - yes, 1 - occupied, 2 - out of bounds
+    int can_place_building();
+
 public:
 	int gold, wheat, wood, stone, gems;
 	int level, exp, troph;
@@ -51,8 +59,6 @@ public:
     };
 
 private:
-    Base();
-
     std::vector<std::vector<Tile>> tiles;
     std::vector<Person> farmers;
     std::vector<Building> shop_buildings;

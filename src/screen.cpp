@@ -7,6 +7,15 @@
 #include <iostream>
 #include <string>
 
+Screen& Screen::get()
+{
+	static Screen instance;
+	return instance;
+}
+
+Screen::Screen()
+	: SCREEN_WIDTH(1170), SCREEN_HEIGHT(525) {}
+
 void Screen::set_window()
 {
 	window.reset(SDL_CreateWindow("Nighthawk - Kingdoms",
@@ -28,9 +37,6 @@ void Screen::set_window()
 
 	SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_BLEND);
 }
-
-Screen::Screen()
-	: SCREEN_WIDTH(1170), SCREEN_HEIGHT(525) {}
 
 void Screen::update()
 {
@@ -143,7 +149,7 @@ void Screen::text(std::string const& text, SDL_Color const& colour, std::string 
 	SDL_RenderCopy(renderer.get(), text_texture.get(), NULL, &text_rect);
 }
 
-std::pair<int, int> get_img_dim(std::string const& img)
+std::pair<int, int> Screen::get_img_dim(std::string const& img)
 {
 	auto const it = images.find(img);
 	if (it == images.end())
@@ -185,7 +191,7 @@ void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Ali
 		rect.y = y - (h / 2);
 		break;
 	case sdl2::Align::RIGHT:
-		rect.x = x - (w);
+		rect.x = x - w;
 		rect.y = y;
 		break;
 	};
@@ -217,10 +223,44 @@ void Screen::image(std::string const& img, sdl2::Dimension const& dim, sdl2::Ali
 		rect.y = dim.y - (dim.h / 2);
 		break;
 	case sdl2::Align::RIGHT:
-		rect.x = dim.x - (dim.w);
+		rect.x = dim.x - dim.w;
 		rect.y = dim.y;
 		break;
 	};
+
+	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
+}
+
+void Screen::image(std::string const& img, int x, int y, float scale, sdl2::Align alignment)
+{
+	auto const it = images.find(img);
+	if (it == images.end())
+	{
+		sdl2::surface_ptr image(IMG_Load(std::string("../assets/" + img).c_str()));
+		if (image == nullptr)
+			std::cout << "[error] - image '" + img + "' could not load\n";
+
+		images[img] = sdl2::texture_ptr(SDL_CreateTextureFromSurface(renderer.get(), image.get()));
+	}
+
+
+	SDL_Point size;
+	SDL_QueryTexture(images[img].get(), NULL, NULL, &size.x, &size.y);
+
+	SDL_Rect rect{ x, y, size.x * scale, size.y * scale };
+	switch (alignment)
+	{
+	case sdl2::Align::LEFT:
+		break;
+	case sdl2::Align::CENTER:
+		rect.x -= (rect.w / 2);
+		rect.y -= (rect.h / 2);
+		break;
+	case sdl2::Align::RIGHT:
+		rect.x -= rect.w;
+		break;
+	};
+
 
 	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
 }

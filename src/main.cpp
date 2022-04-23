@@ -23,9 +23,11 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	
-	Screen::get().set_window();
 
 	SDL_PumpEvents();
+
+	Screen::get().set_window();
+	Base::get().set_building_dim();
 
 	int b = SDL_GetTicks(), frames = 0;
 	int c = SDL_GetTicks();

@@ -12,11 +12,7 @@
 class Screen
 {
 public:
-	static Screen& get()
-	{
-		static Screen instance;
-		return instance;
-	}
+	static Screen& get();
 
 public:
 	Screen(Screen const&) = delete;
@@ -38,6 +34,7 @@ public:
 	std::pair<int, int> get_img_dim(std::string const& img);
 	void image(std::string const& img, int x, int y, int w, int h, sdl2::Align alignment);
 	void image(std::string const& img, sdl2::Dimension const& dim, sdl2::Align alignment);
+	void image(std::string const& img, int x, int y, float scale, sdl2::Align alignment);
 
 public:
 	int const SCREEN_WIDTH,

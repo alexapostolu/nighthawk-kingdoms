@@ -8,5 +8,6 @@ struct Building
 {
 	std::string img;
 	sdl2::Dimension dim;
+	int height_d;
 	int cost_gold, cost_wood, cost_stone;
 };
