@@ -45,7 +45,7 @@ void Base::set_building_dim()
 
 	auto [x3, y3] = Screen::get().get_img_dim("road.png");
 	shop_buildings.push_back({ "road.png",		 { 1000, Screen::get().SCREEN_HEIGHT - 150,
-		(int)(x3 * 0.25), (int)(y3 * 0.25) }, 0, 10, 0, 0});
+		(int)(x3 * 0.15), (int)(y3 * 0.25) }, 0, 10, 0, 0});
 }
 
 void Base::display_resources()
