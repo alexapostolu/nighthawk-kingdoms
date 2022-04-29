@@ -385,8 +385,6 @@ void Base::handle_mouse_dragged(int x, int y)
 
 		if (shop_state == ShopState::HIDDEN && place_state == PlaceState::FOLLOW_MOUSE)
 		{
-			auto& [img, dim, height_d, cost_g, cost_w, cost_s] = base_buildings[place];
-
 			dim.x = ((x - 5) / 20) * 20 + 5;
 			dim.y = (y / 20) * 20;
 		}
