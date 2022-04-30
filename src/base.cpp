@@ -37,7 +37,7 @@ void Base::set_building_dim()
 {
 	auto [x1, y1] = Screen::get().get_img_dim("farmhouse.png");
 	shop_buildings.push_back({ "farmhouse.png",  { 200, Screen::get().SCREEN_HEIGHT - 150,
-		(int)(x1 * 0.25), (int)(y1 * 0.25) }, 3, 100, 0, 0 });
+		(int)(x1 * 0.25), (int)(y1 * 0.25) }, 2, 100, 0, 0 });
 
 	auto [x2, y2] = Screen::get().get_img_dim("lumbermill.png");
 	shop_buildings.push_back({ "lumbermill.png", { 600, Screen::get().SCREEN_HEIGHT - 150,
@@ -45,7 +45,7 @@ void Base::set_building_dim()
 
 	auto [x3, y3] = Screen::get().get_img_dim("road.png");
 	shop_buildings.push_back({ "road.png",		 { 1000, Screen::get().SCREEN_HEIGHT - 150,
-		(int)(x3 * 0.25), (int)(y3 * 0.25) }, 0, 10, 0, 0});
+		(int)(x3 * 0.25), (int)(y3 * 0.1) }, 0, 10, 0, 0});
 }
 
 void Base::display_resources()
@@ -123,8 +123,12 @@ void Base::display_scene()
 		for (int i = 0; i < TILES_Y; ++i)
 		{
 			for (int j = 0; j < TILES_X; ++j)
-				Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20,
-					tiles[i][j].state == TileState::OCCUPIED ? sdl2::clr_black : sdl2::clr_clear, sdl2::clr_white);
+			{
+				Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20, sdl2::clr_clear, sdl2::clr_white);
+				
+				// testing occupied cells
+				//Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20, sdl2::clr_black, sdl2::clr_white);
+			}
 		}
 	}
 
@@ -152,41 +156,12 @@ void Base::display_scene()
 		int prev_x = dim.x;
 		int prev_y = dim.y;
 
-		if (img == "road.png")
-		{
-			dim.x += 10;
-			dim.y += 10;
-		}
+		int can_place = can_place_building(base_buildings[place]);
 
-		int x1 = ((dim.x - (dim.w / 2)) - 5) / 20;
-		int x2 = ((dim.x + (dim.w / 2)) - 5) / 20;
-		int y1 = ((dim.y - (dim.h / 2) + (height_d * 20)) - 60) / 20;
-		int y2 = ((dim.y + (dim.h / 2)) - 60) / 20;
-
-		bool can_place = true;
-		bool out = false;
-		for (int i = x1; i <= x2; ++i)
-		{
-			for (int j = y1; j <= y2; ++j)
-			{
-				if (j < 0 || j >= tiles.size() || i < 0 || i >= tiles[j].size())
-				{
-					out = true;
-					break;
-				}
-				if (tiles[j][i].state == TileState::OCCUPIED)
-				{
-					can_place = false;
-					break;
-				}
-			}
-		}
-
-		if (out)
+		if (can_place == 2)
 		{
 			dim.x = prev_x;
 			dim.y = prev_y;
-			can_place = false;
 		}
 
 		int rect_w = std::ceil(dim.w / 20.0);
@@ -196,7 +171,7 @@ void Base::display_scene()
 		rect_h = (rect_h + (rect_h % 2)) * 20;
 
 		int h = height_d * 20;
-		Screen::get().rect(dim.x, dim.y + (h / 2), rect_w, rect_h - h, can_place ? sdl2::clr_green : sdl2::clr_red,
+		Screen::get().rect(dim.x, dim.y + (h / 2), rect_w, rect_h - h, !can_place ? sdl2::clr_green : sdl2::clr_red,
 			sdl2::clr_clear, sdl2::Align::CENTER);
 
 		Screen::get().image(img, dim.x, dim.y, dim.w, dim.h, sdl2::Align::CENTER);
@@ -284,46 +259,19 @@ void Base::handle_mouse_pressed(int x, int y)
 
 			if (std::sqrt(std::pow(x - (dim.x - 40), 2) + std::pow(y - (base+ 30), 2)) <= 20)
 			{
-				if (img == "road.png")
+				int can_place = can_place_building(base_buildings[place]);
+
+				if (can_place == 0)
 				{
-					tiles[(dim.y - 60) / 20][(dim.x - 5) / 20].state = TileState::PATH;
+					int x1 = ((dim.x - (dim.w / 2)) - 5) / 20;
+					int x2 = ((dim.x + (dim.w / 2)) - 5) / 20;
+					int y1 = ((dim.y - (dim.h / 2) + (height_d * 20)) - 60) / 20;
+					int y2 = ((dim.y + (dim.h / 2)) - 60) / 20;
 
-					gold -= cost_g;
-					wood -= cost_w;
-					stone -= cost_s;
-					place = -1;
-					return;
-				}
-
-				int x1 = ((dim.x - (dim.w / 2)) - 5) / 20;
-				int x2 = ((dim.x + (dim.w / 2)) - 5) / 20;
-				int y1 = ((dim.y - (dim.h / 2) + (height_d * 20)) - 60) / 20;
-				int y2 = ((dim.y + (dim.h / 2)) - 60) / 20;
-
-				bool can_place = true;
-				for (int i = x1; i <= x2; ++i)
-				{
-					for (int j = y1; j <= y2; ++j)
-					{
-						if (i < 0 || i >= tiles[j].size() || j < 0 || j >= tiles.size())
-						{
-							can_place = false;
-							break;
-						}
-						if (tiles[j][i].state == TileState::OCCUPIED)
-						{
-							can_place = false;
-							break;
-						}
-					}
-				}
-
-				if (can_place)
-				{
 					for (int i = x1; i <= x2; ++i)
 					{
 						for (int j = y1; j <= y2; ++j)
-							tiles[j][i].state = TileState::OCCUPIED;
+							tiles[j][i].state = img == "road.png" ? TileState::PATH : TileState::OCCUPIED;
 					}
 
 					gold -= cost_g;
@@ -387,8 +335,19 @@ void Base::handle_mouse_dragged(int x, int y)
 		{
 			auto& [img, dim, height_d, cost_g, cost_w, cost_s] = base_buildings[place];
 
+			int prev_x = dim.x;
+			int prev_y = dim.y;
+
 			dim.x = ((x - 5) / 20) * 20 + 5;
 			dim.y = (y / 20) * 20;
+
+			int can_place = can_place_building(base_buildings[place]);
+
+			if (can_place == 2)
+			{
+				dim.x = prev_x;
+				dim.y = prev_y;
+			}
 		}
 	}
 }
@@ -396,4 +355,32 @@ void Base::handle_mouse_dragged(int x, int y)
 void Base::handle_mouse_released(int x, int y)
 {
 	place_state = PlaceState::STATIONERY;
+}
+
+int Base::can_place_building(Building const& building)
+{
+	int x1 = ((building.dim.x - (building.dim.w / 2)) - 5) / 20;
+	int x2 = ((building.dim.x + (building.dim.w / 2)) - 5) / 20;
+	int y1 = ((building.dim.y - (building.dim.h / 2) + (building.height_d * 20)) - 60) / 20;
+	int y2 = ((building.dim.y + (building.dim.h / 2)) - 60) / 20;
+
+	bool can_place = true;
+	bool out = false;
+	for (int i = x1; i <= x2; ++i)
+	{
+		for (int j = y1; j <= y2; ++j)
+		{
+			if (i < 0 || i >= tiles[j].size() || j < 0 || j >= tiles.size())
+			{
+				out = true;
+				break;
+			}
+
+			if (tiles[j][i].state == TileState::OCCUPIED)
+				can_place = false;
+		}
+	}
+
+	return out ? 2
+			   : !can_place;
 }

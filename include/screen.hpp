@@ -25,6 +25,7 @@ public:
 	void clear();
 
 	void rect(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color const& stroke, sdl2::Align alignment = sdl2::Align::LEFT);
+	void rhombus(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color const& stroke, sdl2::Align alignment = sdl2::Align::LEFT);
 	void circle(int x, int y, int r);
 
 	// x, y is where the text starts, align is where the text starts

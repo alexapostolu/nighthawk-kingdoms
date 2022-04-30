@@ -10,6 +10,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <forward_list>
 
 class Base
 {
@@ -35,7 +36,7 @@ private:
     Base();
 
     // 0 - yes, 1 - occupied, 2 - out of bounds
-    int can_place_building();
+    int can_place_building(Building const& building);
 
 public:
 	int gold, wheat, wood, stone, gems;

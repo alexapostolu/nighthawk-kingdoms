@@ -45,12 +45,7 @@ void Screen::update()
 
 void Screen::clear()
 {
-	int fw = SCREEN_WIDTH / 5, fh = SCREEN_HEIGHT / 2;
-	for (int i = 0; i < 5; ++i)
-	{
-		for (int j = 0; j < 2; ++j)
-			image("grass.png", i * fw, j * fh, fw + 1, fh + 1, sdl2::Align::LEFT);
-	}
+	image("grass11.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, sdl2::Align::LEFT);
 }
 
 void Screen::rect(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color const& stroke, sdl2::Align alignment)
@@ -79,6 +74,11 @@ void Screen::rect(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color c
 
 	SDL_SetRenderDrawColor(renderer.get(), stroke.r, stroke.g, stroke.b, stroke.a);
 	SDL_RenderDrawRect(renderer.get(), &rect);
+}
+
+void Screen::rhombus(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color const& stroke, sdl2::Align alignment)
+{
+	//SDL_RenderDrawPoint(renderer.get(), center_x - y, center_y + x);
 }
 
 void Screen::circle(int center_x, int center_y, int r)
