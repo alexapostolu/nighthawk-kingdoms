@@ -45,7 +45,7 @@ void Base::set_building_dim()
 
 	auto [x3, y3] = Screen::get().get_img_dim("road.png");
 	shop_buildings.push_back({ "road.png",		 { 1000, Screen::get().SCREEN_HEIGHT - 150,
-		(int)(x3 * 0.25), (int)(y3 * 0.1) }, 0, 10, 0, 0});
+		(int)(x3 * 0.15), (int)(y3 * 0.25) }, 0, 10, 0, 0});
 }
 
 void Base::display_resources()
@@ -333,11 +333,6 @@ void Base::handle_mouse_dragged(int x, int y)
 
 		if (shop_state == ShopState::HIDDEN && place_state == PlaceState::FOLLOW_MOUSE)
 		{
-			auto& [img, dim, height_d, cost_g, cost_w, cost_s] = base_buildings[place];
-
-			int prev_x = dim.x;
-			int prev_y = dim.y;
-
 			dim.x = ((x - 5) / 20) * 20 + 5;
 			dim.y = (y / 20) * 20;
 

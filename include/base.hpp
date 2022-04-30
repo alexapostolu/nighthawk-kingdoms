@@ -63,7 +63,7 @@ private:
     std::vector<std::vector<Tile>> tiles;
     std::vector<Person> farmers;
     std::vector<Building> shop_buildings;
-    std::vector<Building> base_buildings;
+	std::map<int, std::forward_list<Building>> base_buildings;
     // index of building being placed
     int place;
     PlaceState place_state;
