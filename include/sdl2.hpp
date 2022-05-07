@@ -25,7 +25,6 @@ using surface_ptr  = std::unique_ptr<SDL_Surface,  SDL_Deleter>;
 using texture_ptr  = std::unique_ptr<SDL_Texture,  SDL_Deleter>;
 
 using font_ptr = std::unique_ptr<TTF_Font, SDL_Deleter>;
-	
 
 
 

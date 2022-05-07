@@ -7,10 +7,11 @@
 
 #include <SDL.h>
 
+#include <functional>
 #include <random>
 #include <string>
 #include <vector>
-#include <forward_list>
+#include <set>
 
 class Base
 {
@@ -36,7 +37,10 @@ private:
     Base();
 
     // 0 - yes, 1 - occupied, 2 - out of bounds
-    int can_place_building(Building const& building);
+    int can_place_building(Building const& building) const;
+    void update_base_buildings(Building const& building);
+    void display_farmers();
+    void display_buildings();
 
 public:
 	int gold, wheat, wood, stone, gems;
@@ -63,10 +67,12 @@ private:
     std::vector<std::vector<Tile>> tiles;
     std::vector<Person> farmers;
     std::vector<Building> shop_buildings;
-	std::map<int, std::forward_list<Building>> base_buildings;
-    // index of building being placed
-    int place;
+
+	std::set<Building> base_buildings;
+    std::set<Building>::iterator place;
     PlaceState place_state;
+
+    int gold_production, wheat_production, wood_production, stone_production;
 
     sdl2::Text text_build;
 };

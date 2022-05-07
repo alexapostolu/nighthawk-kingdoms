@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <cassert>
 
 Screen& Screen::get()
 {
@@ -45,7 +46,7 @@ void Screen::update()
 
 void Screen::clear()
 {
-	image("grass11.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, sdl2::Align::LEFT);
+	image("grass.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, sdl2::Align::LEFT);
 }
 
 void Screen::rect(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color const& stroke, sdl2::Align alignment)
@@ -167,14 +168,14 @@ std::pair<int, int> Screen::get_img_dim(std::string const& img)
 	return { size.x, size.y };
 }
 
-void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Align alignment)
+void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Align alignment, int alpha)
 {
 	auto const it = images.find(img);
 	if (it == images.end())
 	{
 		sdl2::surface_ptr image(IMG_Load(std::string("../assets/" + img).c_str()));
 		if (image == nullptr)
-			std::cout << "[error] - image '" + img + "' could not load\n";
+			std::cout << "[fatal error] - image '" + img + "' could not load\n";
 
 		images[img] = sdl2::texture_ptr(SDL_CreateTextureFromSurface(renderer.get(), image.get()));
 	}
@@ -196,10 +197,11 @@ void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Ali
 		break;
 	};
 
+	SDL_SetTextureAlphaMod(images[img].get(), alpha);
 	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
 }
 
-void Screen::image(std::string const& img, sdl2::Dimension const& dim, sdl2::Align alignment)
+void Screen::image(std::string const& img, sdl2::Dimension const& dim, sdl2::Align alignment, int alpha)
 {
 	auto const it = images.find(img);
 	if (it == images.end())
@@ -228,39 +230,6 @@ void Screen::image(std::string const& img, sdl2::Dimension const& dim, sdl2::Ali
 		break;
 	};
 
-	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
-}
-
-void Screen::image(std::string const& img, int x, int y, float scale, sdl2::Align alignment)
-{
-	auto const it = images.find(img);
-	if (it == images.end())
-	{
-		sdl2::surface_ptr image(IMG_Load(std::string("../assets/" + img).c_str()));
-		if (image == nullptr)
-			std::cout << "[error] - image '" + img + "' could not load\n";
-
-		images[img] = sdl2::texture_ptr(SDL_CreateTextureFromSurface(renderer.get(), image.get()));
-	}
-
-
-	SDL_Point size;
-	SDL_QueryTexture(images[img].get(), NULL, NULL, &size.x, &size.y);
-
-	SDL_Rect rect{ x, y, size.x * scale, size.y * scale };
-	switch (alignment)
-	{
-	case sdl2::Align::LEFT:
-		break;
-	case sdl2::Align::CENTER:
-		rect.x -= (rect.w / 2);
-		rect.y -= (rect.h / 2);
-		break;
-	case sdl2::Align::RIGHT:
-		rect.x -= rect.w;
-		break;
-	};
-
-
+	SDL_SetTextureAlphaMod(images[img].get(), alpha);
 	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
 }

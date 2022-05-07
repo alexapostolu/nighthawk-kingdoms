@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 Base& Base::get()
 {
@@ -26,7 +27,7 @@ Base::Base()
 	, edit_mode(false), shop_state(ShopState::HIDDEN)
 	, TILES_X(58), TILES_Y(23)
 	, tiles(TILES_Y, std::vector<Tile>(TILES_X, Tile{ TileState::GRASS }))
-	, place(-1)
+	, place(base_buildings.end())
 	, text_build(Screen::get().SCREEN_WIDTH - 20, Screen::get().SCREEN_HEIGHT - 65, sdl2::Align::RIGHT)
 {
 	farmers.push_back(Person{ { TILES_X / 2, TILES_Y / 2 }, { TILES_X / 2.f * 20 + 5, TILES_Y / 2.f * 20 + 60 } });
@@ -60,6 +61,8 @@ void Base::display_resources()
 		"Gems: " + std::to_string(Base::get().gems),
 	};
 
+	std::string imgs[] = { "gold.png", "wheat.png", "wood.png", "gems.png" };
+
 	int pos[] = {
 		0,
 		(Screen::get().SCREEN_WIDTH / 4),
@@ -74,8 +77,11 @@ void Base::display_resources()
 
 	for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i)
 	{
+		Screen::get().image(imgs[i],
+			(Screen::get().SCREEN_WIDTH / 4 * i) + margin - 10, 4, 40, 40, sdl2::Align::RIGHT);
+
 		Screen::get().text(str[i], sdl2::clr_yellow, sdl2::str_brygada, 24,
-			(Screen::get().SCREEN_WIDTH / 4 * i) + margin, 10, sdl2::Align::LEFT);
+			(Screen::get().SCREEN_WIDTH / 4 * i) + margin , 10, sdl2::Align::LEFT);
 	}
 }
 
@@ -83,86 +89,37 @@ void Base::display_scene()
 {
 	static int tick = 0;
 
-	float spd = 0.5f;
-	static int step_size = 20 / spd;
-
-	for (auto& farmer : farmers)
+	if (tick == 60)
 	{
-		Screen::get().image("farmer.png",
-			(int)farmer.actual_pos.x, (int)farmer.actual_pos.y, 100, 60, sdl2::Align::CENTER);
-
-		if (farmer.path.empty())
-			farmer.generate_path(tiles);
-
-		auto const& dest = farmer.path[0];
-		if (step_size == 0)
-		{
-			farmer.path_pos = farmer.path[0];
-			farmer.path.pop_front();
-
-			step_size = 20 / spd;
-		}
-		else
-		{
-			if (farmer.path_pos.x < dest.x)
-				farmer.actual_pos.x += spd;
-			else if (farmer.path_pos.x > dest.x)
-				farmer.actual_pos.x -= spd;
-			else if (farmer.path_pos.y < dest.y)
-				farmer.actual_pos.y += spd;
-			else if (farmer.path_pos.y > dest.y)
-				farmer.actual_pos.y -= spd;
-
-			step_size--;
-		}
+		gold += gold_production;
+		wheat += wheat_production;
+		wood += wood_production;
+		stone += stone_production;
 	}
 
+	display_farmers();
+
 	// display tile grid when placing buildings
-	if (place != -1)
+	if (place != base_buildings.end())
 	{
 		for (int i = 0; i < TILES_Y; ++i)
 		{
 			for (int j = 0; j < TILES_X; ++j)
 			{
-				Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20, sdl2::clr_clear, sdl2::clr_white);
+				Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20,
+					sdl2::clr_clear, sdl2::clr_white);
 				
 				// testing occupied cells
-				//Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20, sdl2::clr_black, sdl2::clr_white);
+				// Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20, sdl2::clr_black, sdl2::clr_white);
 			}
 		}
 	}
 
-	for (std::size_t i = 0; i < base_buildings.size(); ++i)
+	// display dragged building
+	if (place != base_buildings.end())
 	{
-		if (i == place)
-			continue;
-
-		auto const& [img, dim, height_d, cost_g, cost_w, cost_s] = base_buildings[i];
-		Screen::get().image(img, dim.x, dim.y, dim.w, dim.h, sdl2::Align::CENTER);
-
-		if (img == "lumbermill.png" && tick > 500)
-		{
-			gold++;
-			wood++;
-			tick = 0;
-		}
-		tick++;
-	}
-
-	if (place != -1)
-	{
-		auto& [img, dim, height_d, cost_g, cost_w, cost_s] = base_buildings[place];
-
-		int prev_x = dim.x;
-		int prev_y = dim.y;
-
-		int can_place = can_place_building(base_buildings[place]);
-
-		if (can_place == 2)
-		{
-			dim.x = prev_x;
-			dim.y = prev_y;
-		}
+		auto building = *place;
+		auto& [img, dim, height_d, const_g, cost_w, cost_s] = building;
 
 		int rect_w = std::ceil(dim.w / 20.0);
 		rect_w = (rect_w + (rect_w % 2)) * 20;
@@ -170,15 +127,21 @@ void Base::display_scene()
 		int rect_h = std::ceil(dim.h / 20.0);
 		rect_h = (rect_h + (rect_h % 2)) * 20;
 
+		int can_place = can_place_building(building);
 		int h = height_d * 20;
 		Screen::get().rect(dim.x, dim.y + (h / 2), rect_w, rect_h - h, !can_place ? sdl2::clr_green : sdl2::clr_red,
 			sdl2::clr_clear, sdl2::Align::CENTER);
+	}
 
-		Screen::get().image(img, dim.x, dim.y, dim.w, dim.h, sdl2::Align::CENTER);
+	display_buildings();
 
-		int const base = dim.y + (dim.h / 2);
-		Screen::get().image("checkmark.png", dim.x - 40, base + 30, 40, 40, sdl2::Align::CENTER);
-		Screen::get().image("x.png",		 dim.x + 40, base + 30, 40, 40, sdl2::Align::CENTER);
+	if (place != base_buildings.end())
+	{
+		auto& [img, dim, height_d, const_g, cost_w, cost_s] = *place;
+		int const base = dim.y - (dim.h / 2) - 30;
+
+		Screen::get().image("checkmark.png", dim.x - 40, base, 40, 40, sdl2::Align::CENTER);
+		Screen::get().image("x.png",		 dim.x + 40, base, 40, 40, sdl2::Align::CENTER);
 	}
 }
 
@@ -191,12 +154,10 @@ void Base::display_shop()
 	switch (shop_state)
 	{
 	case ShopState::HIDDEN: {
-		if (place == -1)
+		if (place == base_buildings.end())
 		{
 			Screen::get().text("BUILD", sdl2::clr_white, sdl2::str_brygada, 45,
 				text_build.dim.x, text_build.dim.y, text_build.align);
-
-			shop_y = Screen::get().SCREEN_HEIGHT;
 		}
 
 		shop_y = Screen::get().SCREEN_HEIGHT;
@@ -248,44 +209,41 @@ void Base::handle_mouse_pressed(int x, int y)
 {
 	if (shop_state == ShopState::HIDDEN)
 	{
-		if (text_build.clicked_on(x, y) && place == -1)
+		if (place == base_buildings.end() && text_build.clicked_on(x, y))
 		{
 			shop_state = ShopState::APPEARING;
 		}
-		else if (place != -1)
+		else if (place != base_buildings.end())
 		{
-			auto& [img, dim, height_d, cost_g, cost_w, cost_s] = base_buildings[place];
-			int const base = dim.y + (dim.h / 2);
-
-			if (std::sqrt(std::pow(x - (dim.x - 40), 2) + std::pow(y - (base+ 30), 2)) <= 20)
+			auto building = *place;
+			auto& [img, dim, height_d, cost_g, cost_w, cost_s] = building;
+			int const base = dim.y - (dim.h / 2) - 30;
+			
+			if (std::sqrt(std::pow(x - (dim.x - 40), 2) + std::pow(y - base, 2)) <= 20 &&
+				can_place_building(building) == 0)
 			{
-				int can_place = can_place_building(base_buildings[place]);
+				int x1 = ((dim.x - (dim.w / 2)) - 5) / 20;
+				int x2 = ((dim.x + (dim.w / 2)) - 5) / 20;
+				int y1 = ((dim.y - (dim.h / 2) + (height_d * 20)) - 60) / 20;
+				int y2 = ((dim.y + (dim.h / 2)) - 60) / 20;
 
-				if (can_place == 0)
+				for (int i = y1; i <= y2; ++i)
 				{
-					int x1 = ((dim.x - (dim.w / 2)) - 5) / 20;
-					int x2 = ((dim.x + (dim.w / 2)) - 5) / 20;
-					int y1 = ((dim.y - (dim.h / 2) + (height_d * 20)) - 60) / 20;
-					int y2 = ((dim.y + (dim.h / 2)) - 60) / 20;
-
-					for (int i = x1; i <= x2; ++i)
-					{
-						for (int j = y1; j <= y2; ++j)
-							tiles[j][i].state = img == "road.png" ? TileState::PATH : TileState::OCCUPIED;
-					}
-
-					gold -= cost_g;
-					wood -= cost_w;
-					stone -= cost_s;
-					place = -1;
-					place_state = PlaceState::STATIONERY;
+					for (int j = x1; j <= x2; ++j)
+						tiles[i][j].state = img == "road.png" ? TileState::PATH : TileState::OCCUPIED;
 				}
-			}
-			else if (std::sqrt(std::pow(x - (dim.x + 40), 2) + std::pow(y - (base + 30), 2)) <= 20)
-			{
-				base_buildings.pop_back();
 
-				place = -1;
+				gold -= cost_g;
+				wood -= cost_w;
+				stone -= cost_s;
+				place = base_buildings.end();
+				place_state = PlaceState::STATIONERY;
+			}
+			else if (std::sqrt(std::pow(x - (dim.x + 40), 2) + std::pow(y - base, 2)) <= 20)
+			{
+				base_buildings.erase(place);
+				place = base_buildings.end();
+
 				shop_state = ShopState::APPEARING;
 			}
 		}
@@ -304,14 +262,18 @@ void Base::handle_mouse_dragged(int x, int y)
 {
 	if (shop_state == ShopState::VISIBLE)
 	{
+		assert(place == base_buildings.end());
+
 		for (auto const& building : shop_buildings)
 		{
-			auto const& [img, dim, height_d, cost_g, cost_w, cost_s] = building;
+			auto building_copy = building;
+			auto& [img, dim, height_d, cost_g, cost_w, cost_s] = building_copy;
 			if (x >= dim.x - (dim.w / 2) && x <= dim.x + (dim.w / 2) &&
 				y >= dim.y - (dim.h / 2) && y <= dim.y + (dim.h / 2))
 			{
-				base_buildings.push_back({ img, { dim.x, dim.y, (int)(dim.w * 0.6), (int)(dim.h * 0.6) }, height_d, cost_g, cost_w, cost_s });
-				place = base_buildings.size() - 1;
+				dim.w *= 0.6;
+				dim.h *= 0.6;
+				update_base_buildings(building_copy);
 
 				place_state = PlaceState::FOLLOW_MOUSE;
 				shop_state = ShopState::HIDDEN;
@@ -322,27 +284,22 @@ void Base::handle_mouse_dragged(int x, int y)
 		return;
 	}
 
-	if (place != -1)
+	if (place != base_buildings.end())
 	{
-		auto const& [img, dim, height_d, cost_g, cost_w, cost_s] = base_buildings[place];
+		auto building = *place;
+		auto& [img, dim, height_d, cost_g, cost_w, cost_s] = building;
+
 		if (x >= dim.x - (dim.w / 2) && x <= dim.x + (dim.w / 2) &&
 			y >= dim.y - (dim.h / 2) && y <= dim.y + (dim.h / 2))
-		{
 			place_state = PlaceState::FOLLOW_MOUSE;
-		}
 
 		if (shop_state == ShopState::HIDDEN && place_state == PlaceState::FOLLOW_MOUSE)
 		{
 			dim.x = ((x - 5) / 20) * 20 + 5;
 			dim.y = (y / 20) * 20;
 
-			int can_place = can_place_building(base_buildings[place]);
-
-			if (can_place == 2)
-			{
-				dim.x = prev_x;
-				dim.y = prev_y;
-			}
+			if (can_place_building(building) != 2)
+				update_base_buildings(building);
 		}
 	}
 }
@@ -352,7 +309,7 @@ void Base::handle_mouse_released(int x, int y)
 	place_state = PlaceState::STATIONERY;
 }
 
-int Base::can_place_building(Building const& building)
+int Base::can_place_building(Building const& building) const
 {
 	int x1 = ((building.dim.x - (building.dim.w / 2)) - 5) / 20;
 	int x2 = ((building.dim.x + (building.dim.w / 2)) - 5) / 20;
@@ -378,4 +335,73 @@ int Base::can_place_building(Building const& building)
 
 	return out ? 2
 			   : !can_place;
+}
+
+void Base::update_base_buildings(Building const& building)
+{
+	if (place != base_buildings.end())
+		base_buildings.erase(place);
+
+	base_buildings.insert(building);
+
+	for (auto it = base_buildings.cbegin(); it != base_buildings.cend(); ++it)
+	{
+		if (it->dim.y == building.dim.y && it->dim.x == building.dim.x)
+		{
+			place = it;
+			return;
+		}
+	}
+
+	assert(place != base_buildings.end());
+}
+
+void Base::display_farmers()
+{
+	float const spd = 0.5f;
+	static int step_size = 20 / spd;
+
+	for (auto& farmer : farmers)
+	{
+		Screen::get().image(
+			"farmer.png",
+			(int)farmer.actual_pos.x, (int)farmer.actual_pos.y, 100, 60,
+			sdl2::Align::CENTER);
+
+		if (farmer.path.empty())
+			farmer.generate_path(tiles);
+
+		auto const& dest = farmer.path[0];
+		if (step_size == 0)
+		{
+			farmer.path_pos = farmer.path[0];
+			farmer.path.pop_front();
+
+			step_size = 20 / spd;
+		}
+		else
+		{
+			if (farmer.path_pos.x < dest.x)
+				farmer.actual_pos.x += spd;
+			else if (farmer.path_pos.x > dest.x)
+				farmer.actual_pos.x -= spd;
+			else if (farmer.path_pos.y < dest.y)
+				farmer.actual_pos.y += spd;
+			else if (farmer.path_pos.y > dest.y)
+				farmer.actual_pos.y -= spd;
+
+			step_size--;
+		}
+	}
+}
+
+void Base::display_buildings()
+{
+	for (auto it = base_buildings.begin(); it != base_buildings.end(); ++it)
+	{
+		if (place != base_buildings.end() && it != place)
+			Screen::get().image(it->img, it->dim, sdl2::Align::CENTER, 200);
+		else
+			Screen::get().image(it->img, it->dim, sdl2::Align::CENTER);
+	}
 }

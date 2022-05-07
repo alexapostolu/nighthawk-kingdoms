@@ -5,6 +5,7 @@
 #include <SDL_image.h>
 
 #include <iostream>
+#include <cmath>
 #include <string>
 
 #define n_ptr else std::cout << "[error] - " << '\n';
