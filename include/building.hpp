@@ -2,7 +2,9 @@
 
 #include "sdl2.hpp"
 
+#include <memory>
 #include <string>
+#include <set>
 
 class Building
 {
@@ -14,12 +16,15 @@ public:
 	void display_building(bool const transparent) const;
 	void display_backdrop(SDL_Color const& clr) const;
 	void display_placement_options() const;
-	bool is_building_pressed(int x, int y) const;
+	bool is_pressed(int x, int y) const;
 
 	virtual void add_resources();
 	virtual bool is_display_cap();
 	virtual void display_item();
 
+public:
+	virtual std::shared_ptr<Building> create_building(std::set<std::shared_ptr<Building>>& s);
+	
 public:
 	bool operator < (Building const& _building) const;
 	bool operator == (Building const& _building) const;
@@ -51,6 +56,9 @@ public:
 	void add_resources() override;
 	bool is_display_cap() override;
 	void display_item() override;
+
+public:
+	std::shared_ptr<Building> create_building(std::set<std::shared_ptr<Building>>& s) override;
 
 private:
 	ProdType type;

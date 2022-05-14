@@ -1,8 +1,10 @@
 #include "building.hpp"
 #include "screen.hpp"
 
+#include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <set>
 #include <string>
 
 Building::Building(std::string const& _img, sdl2::Dimension const _dim,
@@ -39,15 +41,23 @@ void Building::display_placement_options() const
 	Screen::get().image("x.png",		 dim.x + 40, base, 40, 40, sdl2::Align::CENTER);
 }
 
-bool Building::is_building_pressed(int x, int y) const
+bool Building::is_pressed(int x, int y) const
 {
 	return x >= dim.x - (dim.w / 2) && x <= dim.x + (dim.w / 2)
 		&& y >= dim.y - (dim.h / 2) && y <= dim.y + (dim.h / 2);
 }
 
 void Building::add_resources() {}
-bool Building::is_display_cap() {}
+bool Building::is_display_cap() { return false; }
 void Building::display_item() {}
+
+std::shared_ptr<Building> Building::create_building(std::set<std::shared_ptr<Building>>& s)
+{
+	auto p = std::make_shared<Building>(img, dim, height_d,
+		cost_gold, cost_wood, cost_stone);
+	s.insert(p);
+	return p;
+}
 
 bool Building::operator < (Building const& _building) const
 {
@@ -73,7 +83,7 @@ ProdBuilding::ProdBuilding(std::string const& _img, sdl2::Dimension const _dim,
 
 void ProdBuilding::add_resources()
 {
-	amount = std::max(storage_cap, amount + rate);
+	amount = std::min(storage_cap, amount + rate);
 }
 
 bool ProdBuilding::is_display_cap()
@@ -83,5 +93,13 @@ bool ProdBuilding::is_display_cap()
 
 void ProdBuilding::display_item()
 {
-	Screen::get().rect(dim.x, dim.y - 40, 40, 40, sdl2::clr_yellow, sdl2::clr_clear, sdl2::Align::CENTER);
+	Screen::get().rect(dim.x, dim.y - 40, 100, 100, sdl2::clr_white, sdl2::clr_clear, sdl2::Align::CENTER);
+}
+
+std::shared_ptr<Building> ProdBuilding::create_building(std::set<std::shared_ptr<Building>>& s)
+{
+	auto p = std::make_shared<ProdBuilding>(img, dim, height_d,
+		cost_gold, cost_wood, cost_stone, type, rate, display_cap, storage_cap);
+	s.insert(p);
+	return p;
 }
