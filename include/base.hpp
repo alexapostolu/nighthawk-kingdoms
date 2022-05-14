@@ -40,7 +40,8 @@ private:
     int can_place_building(Building const& building) const;
     void update_base_buildings(Building const& building);
     void display_farmers();
-    void display_buildings();
+    void display_base_buildings();
+    void display_grid();
 
 public:
 	int gold, wheat, wood, stone, gems;
@@ -66,13 +67,12 @@ public:
 private:
     std::vector<std::vector<Tile>> tiles;
     std::vector<Person> farmers;
-    std::vector<Building> shop_buildings;
+    std::vector<std::unique_ptr<Building>> shop_buildings;
 
-	std::set<Building> base_buildings;
-    std::set<Building>::iterator place;
+	std::set<std::unique_ptr<Building>> base_buildings;
+    decltype(base_buildings)::iterator place;
     PlaceState place_state;
-
-    int gold_production, wheat_production, wood_production, stone_production;
+    SDL_Point place_offset; // so when mouse dragged it doesn't teleport to mouse
 
     sdl2::Text text_build;
 };
