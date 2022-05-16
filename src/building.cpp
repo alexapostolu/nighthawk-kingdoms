@@ -51,17 +51,15 @@ void Building::add_resources() {}
 bool Building::is_display_cap() { return false; }
 void Building::display_item() {}
 
-std::shared_ptr<Building> Building::create_building(std::set<std::shared_ptr<Building>>& s)
+std::shared_ptr<Building> Building::create_building() const
 {
-	auto p = std::make_shared<Building>(img, dim, height_d,
+	return std::make_shared<Building>(img, dim, height_d,
 		cost_gold, cost_wood, cost_stone);
-	s.insert(p);
-	return p;
 }
 
 bool Building::operator < (Building const& _building) const
 {
-	return dim.y < _building.dim.y || (dim.y == _building.dim.y && dim.x <= _building.dim.x);
+	return dim.y < _building.dim.y || (dim.y == _building.dim.y && dim.x < _building.dim.x);
 }
 
 bool Building::operator == (Building const& _building) const
@@ -96,10 +94,8 @@ void ProdBuilding::display_item()
 	Screen::get().rect(dim.x, dim.y - 40, 100, 100, sdl2::clr_white, sdl2::clr_clear, sdl2::Align::CENTER);
 }
 
-std::shared_ptr<Building> ProdBuilding::create_building(std::set<std::shared_ptr<Building>>& s)
+std::shared_ptr<Building> ProdBuilding::create_building() const
 {
-	auto p = std::make_shared<ProdBuilding>(img, dim, height_d,
+	return std::make_shared<ProdBuilding>(img, dim, height_d,
 		cost_gold, cost_wood, cost_stone, type, rate, display_cap, storage_cap);
-	s.insert(p);
-	return p;
 }

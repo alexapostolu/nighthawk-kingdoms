@@ -38,7 +38,7 @@ private:
 
     // 0 - yes, 1 - occupied, 2 - out of bounds
     int can_place_building(Building const& building) const;
-    void update_base_buildings(Building* building);
+    void update_base_buildings(Building const& building);
     void display_farmers();
     void display_base_buildings();
     void display_grid();
@@ -65,11 +65,17 @@ public:
     };
 
 private:
+    struct shared_ptr_comp
+    {
+        bool operator() (std::shared_ptr<Building> const& a, std::shared_ptr<Building> const& b) const;
+    };
+
+private:
     std::vector<std::vector<Tile>> tiles;
     std::vector<Person> farmers;
     std::vector<std::unique_ptr<Building>> shop_buildings;
 
-	std::set<std::shared_ptr<Building>> base_buildings;
+	std::set<std::shared_ptr<Building>, shared_ptr_comp> base_buildings;
     std::shared_ptr<Building> place;
     PlaceState place_state;
     SDL_Point place_offset; // so when mouse dragged it doesn't teleport to mouse

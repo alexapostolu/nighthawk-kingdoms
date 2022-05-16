@@ -245,15 +245,14 @@ void Base::handle_mouse_dragged(int x, int y)
 	{
 		assert(place == nullptr);
 
-		for (auto const& building : shop_buildings)
+		for (auto const& shop_building : shop_buildings)
 		{
-			auto building_copy = *building.get();
-			auto& dim = building_copy.dim;
-			if (building->is_pressed(x, y))
+			auto building = *shop_building.get();
+			if (building.is_pressed(x, y))
 			{
-				dim.w *= 0.6;
-				dim.h *= 0.6;
-				update_base_buildings(&building_copy);
+				building.dim.w *= 0.6;
+				building.dim.h *= 0.6;
+				update_base_buildings(building);
 
 				place_state = PlaceState::FOLLOW_MOUSE;
 				shop_state = ShopState::HIDDEN;
@@ -266,7 +265,6 @@ void Base::handle_mouse_dragged(int x, int y)
 
 	if (place != nullptr)
 	{
-
 		if (place->is_pressed(x, y))
 		{
 			place_state = PlaceState::FOLLOW_MOUSE;
@@ -280,7 +278,7 @@ void Base::handle_mouse_dragged(int x, int y)
 			building.dim.y = (y / 20) * 20;
 
 			if (can_place_building(building) != 2)
-				update_base_buildings(&building);
+				update_base_buildings(building);
 		}
 	}
 }
@@ -318,12 +316,13 @@ int Base::can_place_building(Building const& building) const
 			   : !can_place;
 }
 
-void Base::update_base_buildings(Building* building)
+void Base::update_base_buildings(Building const& building)
 {
 	if (place != nullptr)
 		base_buildings.erase(place);
 
-	place = building->create_building(base_buildings);
+	place = building.create_building();
+	base_buildings.insert(place);
 }
 
 void Base::display_farmers()
@@ -384,4 +383,9 @@ void Base::display_grid()
 
 	int can_place = can_place_building(*place.get());
 	place.get()->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);
+}
+
+bool Base::shared_ptr_comp::operator () (std::shared_ptr<Building> const& a, std::shared_ptr<Building> const& b) const
+{
+	return (*a) < (*b);
 }

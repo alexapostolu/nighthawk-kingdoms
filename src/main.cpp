@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 		frames++;
 	    if (SDL_GetTicks() - b > 1000)
 	    {
-			std::cout << "fps: " << frames << '\n';
+			//std::cout << "fps: " << frames << '\n';
 	        b = SDL_GetTicks();
 			frames = 0;
 	    }
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 				int x, y;
 				SDL_GetMouseState(&x, &y);
 
-				std::cout << "mouse pos: " << x << ' ' << y << '\n';
+				//std::cout << "mouse pos: " << x << ' ' << y << '\n';
 
 				Base::get().handle_mouse_pressed(x, y);
 				tutorial = false;

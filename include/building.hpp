@@ -23,11 +23,12 @@ public:
 	virtual void display_item();
 
 public:
-	virtual std::shared_ptr<Building> create_building(std::set<std::shared_ptr<Building>>& s);
+	virtual std::shared_ptr<Building> create_building() const;
 	
 public:
 	bool operator < (Building const& _building) const;
 	bool operator == (Building const& _building) const;
+	bool operator () (Building const& _b1, Building const& _b2) const;
 
 public:
 	std::string img;
@@ -58,7 +59,7 @@ public:
 	void display_item() override;
 
 public:
-	std::shared_ptr<Building> create_building(std::set<std::shared_ptr<Building>>& s) override;
+	std::shared_ptr<Building> create_building() const override;
 
 private:
 	ProdType type;
