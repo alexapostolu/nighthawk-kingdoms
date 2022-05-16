@@ -56,5 +56,6 @@ SDL_Color const clr_green{ 60, 220, 0, 150 };
 SDL_Color const clr_white{ 255, 255, 255, 255 };
 SDL_Color const clr_clear{ 0, 0, 0, 0 };
 SDL_Color const clr_red{ 255, 50, 50, 150 };
+SDL_Color const clr_gray{ 240, 240, 240, 170 };
 
 }

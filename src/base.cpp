@@ -99,24 +99,9 @@ void Base::display_resources()
 	}
 }
 
-void Base::display_scene()
+void Base::display_scene(bool second)
 {
-	static int tick = 0;
-
-	if (tick == 120)
-	{
-		for (auto& building : base_buildings)
-		{
-			building->add_resources();
-
-			if (building->is_display_cap())
-				building->display_item();
-		}
-
-		tick = 0;
-	}
-
-	tick++;
+	std::cout << base_buildings.size() << '\n';
 
 	display_farmers();
 
@@ -124,6 +109,7 @@ void Base::display_scene()
 		display_grid();
 
 	display_base_buildings();
+	manage_resources(second);
 
 	if (place != nullptr)
 		place->display_placement_options();
@@ -197,7 +183,7 @@ void Base::handle_mouse_pressed(int x, int y)
 		else if (place != nullptr)
 		{
 			auto building = *place.get();
-			auto& [img, dim, height_d, cost_g, cost_w, cost_s] = building;
+			auto& [img, dim, height_d, cost_g, cost_w, cost_s, id] = building;
 			int const base = dim.y - (dim.h / 2) - 30;
 			
 			if (std::sqrt(std::pow(x - (dim.x - 40), 2) + std::pow(y - base, 2)) <= 20 &&
@@ -245,14 +231,11 @@ void Base::handle_mouse_dragged(int x, int y)
 	{
 		assert(place == nullptr);
 
-		for (auto const& shop_building : shop_buildings)
+		for (auto const& building : shop_buildings)
 		{
-			auto building = *shop_building.get();
-			if (building.is_pressed(x, y))
+			if (building->is_pressed(x, y))
 			{
-				building.dim.w *= 0.6;
-				building.dim.h *= 0.6;
-				update_base_buildings(building);
+				update_base_buildings(building.get(), true);
 
 				place_state = PlaceState::FOLLOW_MOUSE;
 				shop_state = ShopState::HIDDEN;
@@ -273,12 +256,8 @@ void Base::handle_mouse_dragged(int x, int y)
 
 		if (shop_state == ShopState::HIDDEN && place_state == PlaceState::FOLLOW_MOUSE)
 		{
-			auto building = *place;
-			building.dim.x = ((x - 5) / 20) * 20 + 5;
-			building.dim.y = (y / 20) * 20;
-
-			if (can_place_building(building) != 2)
-				update_base_buildings(building);
+			if (can_place_building(*place) != 2)
+				update_base_buildings(place.get(), false, x, y);
 		}
 	}
 }
@@ -316,12 +295,13 @@ int Base::can_place_building(Building const& building) const
 			   : !can_place;
 }
 
-void Base::update_base_buildings(Building const& building)
+void Base::update_base_buildings(Building* building, bool shrink, int x, int y)
 {
 	if (place != nullptr)
 		base_buildings.erase(place);
+		//base_buildings.erase(base_buildings.lower_bound(place));
 
-	place = building.create_building();
+	place = building->create_building(shrink, x, y);
 	base_buildings.insert(place);
 }
 
@@ -370,6 +350,18 @@ void Base::display_base_buildings()
 		it->get()->display_building(place != nullptr && *it != place);
 }
 
+void Base::manage_resources(bool second)
+{
+	for (auto& building : base_buildings)
+	{
+		if (second)
+			building->add_resources();
+
+		if (building->is_display_cap())
+			building->display_item();
+	}
+}
+
 void Base::display_grid()
 {
 	for (int i = 0; i < TILES_Y; ++i)
@@ -385,7 +377,7 @@ void Base::display_grid()
 	place.get()->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);
 }
 
-bool Base::shared_ptr_comp::operator () (std::shared_ptr<Building> const& a, std::shared_ptr<Building> const& b) const
+bool Base::shared_ptr_comp::operator() (std::shared_ptr<Building> const& a, std::shared_ptr<Building> const& b) const
 {
-	return (*a) < (*b);
+	return *a < *b;
 }

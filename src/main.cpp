@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
 	int c = SDL_GetTicks();
 	bool mouse_down = false;
 	bool tutorial = true;
+	int timer = SDL_GetTicks();
 	while (true)
 	{
 		frames++;
@@ -105,7 +106,11 @@ int main(int argc, char* argv[])
 			Screen::get().text("Click the shop button to place your first building, then you are good to go!", sdl2::clr_yellow, sdl2::str_brygada, 24, 120, 180, sdl2::Align::LEFT);
 		}
 
-		Base::get().display_scene();
+		bool const second = SDL_GetTicks() - timer >= 1000;
+		if (second)
+			timer = SDL_GetTicks();
+
+		Base::get().display_scene(second);
 		Base::get().display_shop();
 
 

@@ -26,7 +26,7 @@ public:
 
 public:
     void display_resources();
-	void display_scene();
+	void display_scene(bool second);
     void display_shop();
 
     void handle_mouse_pressed(int x, int y);
@@ -38,9 +38,10 @@ private:
 
     // 0 - yes, 1 - occupied, 2 - out of bounds
     int can_place_building(Building const& building) const;
-    void update_base_buildings(Building const& building);
+    void update_base_buildings(Building* building, bool shrink = false, int x = -1, int y = -1);
     void display_farmers();
     void display_base_buildings();
+    void manage_resources(bool second);
     void display_grid();
 
 public:

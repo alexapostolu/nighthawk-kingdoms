@@ -23,18 +23,20 @@ public:
 	virtual void display_item();
 
 public:
-	virtual std::shared_ptr<Building> create_building() const;
+	virtual std::shared_ptr<Building> create_building(bool shrink, int x, int y) const;
 	
 public:
 	bool operator < (Building const& _building) const;
-	bool operator == (Building const& _building) const;
-	bool operator () (Building const& _b1, Building const& _b2) const;
 
 public:
 	std::string img;
 	sdl2::Dimension dim;
 	int height_d;
 	int cost_gold, cost_wood, cost_stone;
+
+public:
+	int id;
+	static int inc;
 };
 
 enum class ProdType
@@ -59,7 +61,7 @@ public:
 	void display_item() override;
 
 public:
-	std::shared_ptr<Building> create_building() const override;
+	std::shared_ptr<Building> create_building(bool shrink, int x, int y) const override;
 
 private:
 	ProdType type;
