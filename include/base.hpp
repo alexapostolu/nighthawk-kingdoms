@@ -37,7 +37,7 @@ private:
     Base();
 
     // 0 - yes, 1 - occupied, 2 - out of bounds
-    int can_place_building(Building const& building) const;
+    int can_place_building(Building const& b) const;
     void update_base_buildings(Building* building, bool shrink = false, int x = -1, int y = -1);
     void display_farmers();
     void display_base_buildings();
@@ -45,7 +45,7 @@ private:
     void display_grid();
 
 public:
-	int gold, wheat, wood, stone, gems;
+	int gold, wheat, wood, stone, iron, gems;
 	int level, exp, troph;
 	bool edit_mode;
 
@@ -68,7 +68,8 @@ public:
 private:
     struct shared_ptr_comp
     {
-        bool operator() (std::shared_ptr<Building> const& a, std::shared_ptr<Building> const& b) const;
+        bool operator() (std::shared_ptr<Building> const& a,
+                         std::shared_ptr<Building> const& b) const;
     };
 
 private:

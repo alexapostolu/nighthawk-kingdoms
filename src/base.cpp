@@ -214,6 +214,16 @@ void Base::handle_mouse_pressed(int x, int y)
 				shop_state = ShopState::APPEARING;
 			}
 		}
+		else if (place == nullptr)
+		{
+			for (auto const& building : base_buildings)
+			{
+				if (building->is_item_pressed(x, y))
+				{
+					building->collect_item(gold, wheat, wood, stone, iron);
+				}
+			}
+		}
 	}
 	else if (shop_state == ShopState::VISIBLE)
 	{
@@ -267,12 +277,12 @@ void Base::handle_mouse_released(int x, int y)
 	place_state = PlaceState::STATIONERY;
 }
 
-int Base::can_place_building(Building const& building) const
+int Base::can_place_building(Building const& b) const
 {
-	int x1 = ((building.dim.x - (building.dim.w / 2)) - 5) / 20;
-	int x2 = ((building.dim.x + (building.dim.w / 2)) - 5) / 20;
-	int y1 = ((building.dim.y - (building.dim.h / 2) + (building.height_d * 20)) - 60) / 20;
-	int y2 = ((building.dim.y + (building.dim.h / 2)) - 60) / 20;
+	int x1 = ((b.dim.x - (b.dim.w / 2)) - 5) / 20;
+	int x2 = ((b.dim.x + (b.dim.w / 2)) - 5) / 20;
+	int y1 = ((b.dim.y - (b.dim.h / 2) + (b.height_d * 20)) - 60) / 20;
+	int y2 = ((b.dim.y + (b.dim.h / 2)) - 60) / 20;
 
 	bool can_place = true;
 	bool out = false;
@@ -299,7 +309,6 @@ void Base::update_base_buildings(Building* building, bool shrink, int x, int y)
 {
 	if (place != nullptr)
 		base_buildings.erase(place);
-		//base_buildings.erase(base_buildings.lower_bound(place));
 
 	place = building->create_building(shrink, x, y);
 	base_buildings.insert(place);
@@ -357,7 +366,7 @@ void Base::manage_resources(bool second)
 		if (second)
 			building->add_resources();
 
-		if (building->is_display_cap())
+		if (building->is_item_cap())
 			building->display_item();
 	}
 }
@@ -373,8 +382,8 @@ void Base::display_grid()
 		}
 	}
 
-	int can_place = can_place_building(*place.get());
-	place.get()->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);
+	int can_place = can_place_building(*place);
+	place->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);
 }
 
 bool Base::shared_ptr_comp::operator() (std::shared_ptr<Building> const& a, std::shared_ptr<Building> const& b) const

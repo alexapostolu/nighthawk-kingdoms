@@ -19,8 +19,10 @@ public:
 	bool is_pressed(int x, int y) const;
 
 	virtual void add_resources();
-	virtual bool is_display_cap();
 	virtual void display_item();
+	virtual void collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron);
+	virtual bool is_item_cap() const;
+	virtual bool is_item_pressed(int mx, int my) const;
 
 public:
 	virtual std::shared_ptr<Building> create_building(bool shrink, int x, int y) const;
@@ -57,8 +59,10 @@ public:
 
 public:
 	void add_resources() override;
-	bool is_display_cap() override;
 	void display_item() override;
+	void collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron) override;
+	bool is_item_cap() const override;
+	bool is_item_pressed(int mx, int my) const override;
 
 public:
 	std::shared_ptr<Building> create_building(bool shrink, int x, int y) const override;

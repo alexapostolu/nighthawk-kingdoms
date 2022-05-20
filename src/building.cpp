@@ -48,8 +48,10 @@ bool Building::is_pressed(int x, int y) const
 }
 
 void Building::add_resources() {}
-bool Building::is_display_cap() { return false; }
 void Building::display_item() {}
+void Building::collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron) { }
+bool Building::is_item_cap() const { return false; }
+bool Building::is_item_pressed(int mx, int my) const { return false; }
 
 std::shared_ptr<Building> Building::create_building(bool shrink, int x, int y) const
 {
@@ -82,11 +84,6 @@ void ProdBuilding::add_resources()
 	amount = std::min(storage_cap, amount + rate);
 }
 
-bool ProdBuilding::is_display_cap()
-{
-	return amount >= display_cap;
-}
-
 void ProdBuilding::display_item()
 {
 	int s = 70;
@@ -101,10 +98,9 @@ void ProdBuilding::display_item()
 	case ProdType::GOLD:
 		prod_img = "gold.png";
 		break;
-	case ProdType::WHEAT: {
+	case ProdType::WHEAT:
 		prod_img = "wheat.png";
 		break;
-	}
 	case ProdType::WOOD:
 		prod_img = "wood.png";
 		break;
@@ -117,8 +113,48 @@ void ProdBuilding::display_item()
 	}
 
 	auto p = Screen::get().get_img_dim(prod_img);
-	img_dim.h = p.second / (p.first / 50);
+	img_dim.h = p.second / (p.first / img_dim.w);
 	Screen::get().image(prod_img, img_dim, sdl2::Align::CENTER);
+}
+
+void ProdBuilding::collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron)
+{
+	switch (type)
+	{
+	case ProdType::GOLD:
+		gold += amount;
+		break;
+	case ProdType::WHEAT:
+		wheat += amount;
+		break;
+	case ProdType::WOOD:
+		wood += amount;
+		break;
+	case ProdType::STONE:
+		stone += amount;
+		break;
+	case ProdType::IRON:
+		iron += amount;
+		break;
+	}
+
+	amount = 0;
+}
+
+bool ProdBuilding::is_item_cap() const
+{
+	return amount >= display_cap;
+}
+
+bool ProdBuilding::is_item_pressed(int mx, int my) const
+{
+	int s = 70 / 2;
+	int y = dim.y - (dim.h / 2) - (s / 2);
+
+	return is_item_cap()
+		&& mx >= dim.x - s && mx <= dim.x + s
+		&& my >= y - s	   && my <= y + s;
+
 }
 
 std::shared_ptr<Building> ProdBuilding::create_building(bool shrink, int x, int y) const
