@@ -8,9 +8,10 @@
 #include <string>
 
 Building::Building(std::string const& _img, sdl2::Dimension const _dim,
-	int const _height_d, int const _cost_gold, int const _cost_wood, int const _cost_stone)
+	int const _height_d, int const _cost_gold, int const _cost_wood, int const _cost_stone,
+	int const _cost_iron)
 	: img(_img), dim(_dim), height_d(_height_d), cost_gold(_cost_gold), cost_wood(_cost_wood)
-	, cost_stone(_cost_stone), id(inc++)
+	, cost_stone(_cost_stone), cost_iron(_cost_iron), id(inc++)
 {
 
 }
@@ -47,6 +48,11 @@ bool Building::is_pressed(int x, int y) const
 		&& y >= dim.y - (dim.h / 2) && y <= dim.y + (dim.h / 2);
 }
 
+bool Building::can_buy(int gold, int wood, int stone, int iron) const
+{
+	return cost_gold <= gold && cost_wood <= wood && cost_stone <= stone && cost_iron <= iron;
+}
+
 void Building::add_resources() {}
 void Building::display_item() {}
 void Building::collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron) { }
@@ -56,7 +62,7 @@ bool Building::is_item_pressed(int mx, int my) const { return false; }
 std::shared_ptr<Building> Building::create_building(bool shrink, int x, int y) const
 {
 	return std::make_shared<Building>(img, dim, height_d,
-		cost_gold, cost_wood, cost_stone);
+		cost_gold, cost_wood, cost_stone, cost_iron);
 }
 
 bool Building::operator < (Building const& _building) const
@@ -71,8 +77,9 @@ int Building::inc = 0;
 
 ProdBuilding::ProdBuilding(std::string const& _img, sdl2::Dimension const _dim,
 	int const _height_d, int const _cost_gold, int const _cost_wood, int const _cost_stone,
-	ProdType const _type, int const _rate, int const _display_cap, int const _storage_cap)
-	: Building(_img, _dim, _height_d, _cost_gold, _cost_wood, _cost_stone)
+	int const _cost_iron, ProdType const _type, int const _rate, int const _display_cap,
+	int const _storage_cap)
+	: Building(_img, _dim, _height_d, _cost_gold, _cost_wood, _cost_stone, _cost_iron)
 	, type(_type), rate(_rate), display_cap(_display_cap), storage_cap(_storage_cap)
 	, amount(0)
 {
@@ -165,7 +172,7 @@ std::shared_ptr<Building> ProdBuilding::create_building(bool shrink, int x, int 
 		d.w *= 0.6;
 		d.h *= 0.6;
 		return std::make_shared<ProdBuilding>(img, d, height_d,
-			cost_gold, cost_wood, cost_stone, type, rate, display_cap, storage_cap);
+			cost_gold, cost_wood, cost_stone, cost_iron, type, rate, display_cap, storage_cap);
 	}
 	else if (x != -1)
 	{
@@ -173,9 +180,9 @@ std::shared_ptr<Building> ProdBuilding::create_building(bool shrink, int x, int 
 		d.x = ((x - 5) / 20) * 20 + 5;
 		d.y = (y / 20) * 20;;
 		return std::make_shared<ProdBuilding>(img, d, height_d,
-			cost_gold, cost_wood, cost_stone, type, rate, display_cap, storage_cap);
+			cost_gold, cost_wood, cost_stone, cost_iron, type, rate, display_cap, storage_cap);
 	}
 	else
 		return std::make_shared<ProdBuilding>(img, dim, height_d,
-			cost_gold, cost_wood, cost_stone, type, rate, display_cap, storage_cap);
+			cost_gold, cost_wood, cost_stone, cost_iron, type, rate, display_cap, storage_cap);
 }

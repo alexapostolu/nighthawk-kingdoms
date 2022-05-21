@@ -22,13 +22,15 @@ Base& Base::get()
 }
 
 Base::Base()
-	: gold(750), wheat(250), wood(500), stone(0), gems(10)
+	: gold(350), wheat(250), wood(500), stone(0), gems(10)
 	, level(1), exp(0), troph(0)
 	, edit_mode(false), shop_state(ShopState::HIDDEN)
 	, TILES_X(58), TILES_Y(23)
 	, tiles(TILES_Y, std::vector<Tile>(TILES_X, Tile{ TileState::GRASS }))
 	, place(nullptr)
-	, text_build(Screen::get().SCREEN_WIDTH - 20, Screen::get().SCREEN_HEIGHT - 65, sdl2::Align::RIGHT)
+	, text_build("BUILD", Screen::get().SCREEN_WIDTH - 20, Screen::get().SCREEN_HEIGHT - 65, sdl2::Align::RIGHT)
+	, not_enough_resources(-1)
+	, text_not_enough_resources("Not enough resources", 0, 0, sdl2::Align::CENTER)
 {
 	farmers.push_back(Person{ { TILES_X / 2, TILES_Y / 2 }, { TILES_X / 2.f * 20 + 5, TILES_Y / 2.f * 20 + 60 } });
 	farmers.push_back(Person{ { TILES_X / 2 - 5, TILES_Y / 2 + 7 }, { (TILES_X / 2.f - 5 ) * 20 + 5, (TILES_Y / 2.f + 7) * 20 + 60 } });
@@ -41,7 +43,7 @@ void Base::set_building_dim()
 		"farmhouse.png",
 		sdl2::Dimension{200, Screen::get().SCREEN_HEIGHT - 150,
 			(int)(x1 * 0.25), (int)(y1 * 0.25) },
-		2, 100, 0, 0,
+		2, 100, 0, 0, 0,
 		ProdType::WHEAT, 3, 10, 100
 	));
 
@@ -50,7 +52,7 @@ void Base::set_building_dim()
 		"lumbermill.png",
 		sdl2::Dimension{ 600, Screen::get().SCREEN_HEIGHT - 150,
 			(int)(x2 * 0.25), (int)(y2 * 0.25) },
-		0, 100, 0, 0,
+		0, 100, 0, 0, 0,
 		ProdType::WOOD, 3, 10, 100
 	));
 
@@ -59,7 +61,7 @@ void Base::set_building_dim()
 		"road.png",
 		sdl2::Dimension{ 1000, Screen::get().SCREEN_HEIGHT - 150,
 			(int)(x3 * 0.15), (int)(y3 * 0.25) },
-		0, 10, 0, 0
+		0, 10, 0, 0, 0
 	));
 }
 
@@ -101,8 +103,6 @@ void Base::display_resources()
 
 void Base::display_scene(bool second)
 {
-	std::cout << base_buildings.size() << '\n';
-
 	display_farmers();
 
 	if (place != nullptr)
@@ -113,6 +113,17 @@ void Base::display_scene(bool second)
 
 	if (place != nullptr)
 		place->display_placement_options();
+
+	if (not_enough_resources != -1)
+	{
+		float alpha = 1 - (not_enough_resources - text_not_enough_resources.dim.y) / 100.0;
+		Screen::get().text(text_not_enough_resources.text, SDL_Color{ 255, 255, 255, (uint8_t)(255 * alpha) }, sdl2::str_brygada, 20,
+			text_not_enough_resources.dim.x, text_not_enough_resources.dim.y, text_not_enough_resources.align);
+
+		text_not_enough_resources.dim.y--;
+		if (text_not_enough_resources.dim.y <= not_enough_resources)
+			not_enough_resources = -1;
+	}
 }
 
 void Base::display_shop()
@@ -182,13 +193,22 @@ void Base::handle_mouse_pressed(int x, int y)
 		}
 		else if (place != nullptr)
 		{
-			auto building = *place.get();
-			auto& [img, dim, height_d, cost_g, cost_w, cost_s, id] = building;
+			auto const building = *place.get();
+			auto const& [img, dim, height_d, cost_g, cost_w, cost_s, cost_i, id] = building;
 			int const base = dim.y - (dim.h / 2) - 30;
 			
 			if (std::sqrt(std::pow(x - (dim.x - 40), 2) + std::pow(y - base, 2)) <= 20 &&
 				can_place_building(building) == 0)
 			{
+				if (!building.can_buy(gold, wood, stone, iron))
+				{
+					text_not_enough_resources.dim.x = dim.x;
+					text_not_enough_resources.dim.y = dim.y - 30;
+					not_enough_resources = text_not_enough_resources.dim.y - 100;
+
+					return;
+				}
+
 				int x1 = ((dim.x - (dim.w / 2)) - 5) / 20;
 				int x2 = ((dim.x + (dim.w / 2)) - 5) / 20;
 				int y1 = ((dim.y - (dim.h / 2) + (height_d * 20)) - 60) / 20;
@@ -219,9 +239,7 @@ void Base::handle_mouse_pressed(int x, int y)
 			for (auto const& building : base_buildings)
 			{
 				if (building->is_item_pressed(x, y))
-				{
 					building->collect_item(gold, wheat, wood, stone, iron);
-				}
 			}
 		}
 	}

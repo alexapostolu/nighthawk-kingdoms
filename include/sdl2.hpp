@@ -42,9 +42,11 @@ struct Dimension
 
 struct Text
 {
-	Text(int _x, int _y, Align _align);
+	Text(std::string const& _text, int _x, int _y, Align _align);
 	bool clicked_on(int mx, int my);
+	void display();
 
+	std::string text;
 	Dimension dim;
 	Align align;
 };

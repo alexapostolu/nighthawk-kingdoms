@@ -19,13 +19,13 @@ void SDL_Deleter::operator()(SDL_Texture* ptr) { if (ptr) SDL_DestroyTexture(ptr
 
 void SDL_Deleter::operator()(TTF_Font* ptr) { if (ptr) TTF_CloseFont(ptr); n_ptr }
 
-Text::Text(int _x, int _y, Align _align)
-	: dim({ _x, _y, 0, 0 }), align(_align)
+Text::Text(std::string const& _text, int _x, int _y, Align _align)
+	: text(_text), dim({ _x, _y, 0, 0 }), align(_align)
 {
 	TTF_Init();
 
 	font_ptr ptr(TTF_OpenFont(str_brygada.c_str(), 45));
-	TTF_SizeText(ptr.get(), "BUILD", &dim.w, &dim.h);
+	TTF_SizeText(ptr.get(), text.c_str(), &dim.w, &dim.h);
 }
 
 bool Text::clicked_on(int mx, int my)

@@ -10,13 +10,15 @@ class Building
 {
 public:
 	Building(std::string const& _img, sdl2::Dimension const _dim,
-		int const _height_d, int const _cost_gold, int const _cost_wood, int const _cost_stone);
+		int const _height_d, int const _cost_gold, int const _cost_wood,
+		int const _cost_stone, int const _cost_iron);
 
 public:
 	void display_building(bool const transparent) const;
 	void display_backdrop(SDL_Color const& clr) const;
 	void display_placement_options() const;
 	bool is_pressed(int x, int y) const;
+	bool can_buy(int gold, int wood, int stone, int iron) const;
 
 	virtual void add_resources();
 	virtual void display_item();
@@ -34,7 +36,7 @@ public:
 	std::string img;
 	sdl2::Dimension dim;
 	int height_d;
-	int cost_gold, cost_wood, cost_stone;
+	int cost_gold, cost_wood, cost_stone, cost_iron;
 
 public:
 	int id;
@@ -55,7 +57,8 @@ class ProdBuilding : public Building
 public:
 	ProdBuilding(std::string const& _img, sdl2::Dimension const _dim,
 		int const _height_d, int const _cost_gold, int const _cost_wood, int const _cost_stone,
-		ProdType const _type, int const _rate, int const _display_cap, int const _storage_cap);
+		int const _cost_iron, ProdType const _type, int const _rate, int const _display_cap,
+		int const _storage_cap);
 
 public:
 	void add_resources() override;

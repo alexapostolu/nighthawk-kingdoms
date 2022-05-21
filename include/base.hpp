@@ -83,4 +83,6 @@ private:
     SDL_Point place_offset; // so when mouse dragged it doesn't teleport to mouse
 
     sdl2::Text text_build;
+    int not_enough_resources;
+    sdl2::Text text_not_enough_resources;
 };
