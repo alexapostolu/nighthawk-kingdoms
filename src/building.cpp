@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <random>
 #include <algorithm>
 #include <set>
 #include <string>
@@ -54,8 +55,9 @@ bool Building::can_buy(int gold, int wood, int stone, int iron) const
 }
 
 void Building::add_resources() {}
-void Building::display_item() {}
-void Building::collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron) { }
+void Building::display_item() const {}
+void Building::collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron) {}
+void Building::display_item_collect() {}
 bool Building::is_item_cap() const { return false; }
 bool Building::is_item_pressed(int mx, int my) const { return false; }
 
@@ -91,7 +93,7 @@ void ProdBuilding::add_resources()
 	amount = std::min(storage_cap, amount + rate);
 }
 
-void ProdBuilding::display_item()
+void ProdBuilding::display_item() const
 {
 	int s = 70;
 	int y = dim.y - (dim.h / 2) - (s / 2);
@@ -126,6 +128,12 @@ void ProdBuilding::display_item()
 
 void ProdBuilding::collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron)
 {
+	static std::random_device dev;
+	static std::mt19937 rng(dev());
+
+	static std::random_device dev1;
+	static std::mt19937 rng1(dev1());
+
 	switch (type)
 	{
 	case ProdType::GOLD:
@@ -146,6 +154,57 @@ void ProdBuilding::collect_item(int& gold, int& wheat, int& wood, int& stone, in
 	}
 
 	amount = 0;
+
+	std::uniform_int_distribution<int> dist6(-5, 5);
+	std::uniform_int_distribution<float> dist7(0.03, 0.07);
+
+	for (int i = 0; i < 7; ++i)
+	{
+		// time, x, y, a
+		collect_items.push_back({ 0, (float)dist6(rng), (float)dist7(rng1), 255});
+	}
+}
+
+void ProdBuilding::display_item_collect()
+{
+	for (auto it = collect_items.begin(); it != collect_items.end();)
+	{
+		auto& coefs = *it;
+
+		coefs[0] += 1;
+
+		std::string prod_img;
+		switch (type)
+		{
+		case ProdType::GOLD:
+			prod_img = "gold.png";
+			break;
+		case ProdType::WHEAT:
+			prod_img = "wheat.png";
+			break;
+		case ProdType::WOOD:
+			prod_img = "wood.png";
+			break;
+		case ProdType::STONE:
+			prod_img = "stone.png";
+			break;
+		case ProdType::IRON:
+			prod_img = "iron.png";
+			break;
+		}
+		
+		auto p = Screen::get().get_img_dim(prod_img);
+		int h = p.second / (p.first / 45);
+		int y = dim.y - (dim.h / 2) - 35;
+		y += coefs[2] * std::pow(coefs[0], 2);
+		Screen::get().image(prod_img, coefs[0] * coefs[1] + dim.x, y, 45, h, sdl2::Align::CENTER, coefs[3]);
+
+		coefs[3] -= 0.8;
+		if (coefs[3] <= 0)
+			it = collect_items.erase(it);
+		else
+			++it;
+	}
 }
 
 bool ProdBuilding::is_item_cap() const
@@ -156,7 +215,7 @@ bool ProdBuilding::is_item_cap() const
 bool ProdBuilding::is_item_pressed(int mx, int my) const
 {
 	int s = 70 / 2;
-	int y = dim.y - (dim.h / 2) - (s / 2);
+	int y = dim.y - (dim.h / 2) - s;
 
 	return is_item_cap()
 		&& mx >= dim.x - s && mx <= dim.x + s

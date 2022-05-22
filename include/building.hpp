@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <set>
 
 class Building
@@ -21,8 +22,9 @@ public:
 	bool can_buy(int gold, int wood, int stone, int iron) const;
 
 	virtual void add_resources();
-	virtual void display_item();
+	virtual void display_item() const;
 	virtual void collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron);
+	virtual void display_item_collect();
 	virtual bool is_item_cap() const;
 	virtual bool is_item_pressed(int mx, int my) const;
 
@@ -62,8 +64,9 @@ public:
 
 public:
 	void add_resources() override;
-	void display_item() override;
+	void display_item() const override;
 	void collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron) override;
+	void display_item_collect() override;
 	bool is_item_cap() const override;
 	bool is_item_pressed(int mx, int my) const override;
 
@@ -77,4 +80,6 @@ private:
 
 	int display_cap;
 	int storage_cap;
+
+	std::vector<std::vector<float>> collect_items;
 };
