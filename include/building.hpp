@@ -81,5 +81,5 @@ private:
 	int display_cap;
 	int storage_cap;
 
-	std::vector<std::vector<float>> collect_items;
+	std::vector<std::vector<double>> collect_items;
 };
