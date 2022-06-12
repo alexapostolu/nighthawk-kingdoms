@@ -24,6 +24,8 @@ public:
 	void update();
 	void clear();
 
+	// Xiaolin Wu's algorithm
+	void line(int x0, int y0, int x1, int y1, SDL_Color const& color, int weight);
 	void rect(int x, int y, int w, int h, SDL_Color const& fill,
 		SDL_Color const& stroke, sdl2::Align alignment = sdl2::Align::LEFT);
 	void rect(int x, int y, int w, int h, int r, SDL_Color const& fill,
