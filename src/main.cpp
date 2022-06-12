@@ -115,9 +115,9 @@ int main(int argc, char* argv[])
 		Base::get().display_scene(second);
 		Base::get().display_shop();
 
-
 		Screen::get().text("frames: " + std::to_string(framec), sdl2::clr_white,
 			sdl2::str_brygada, 10, 10, Screen::get().SCREEN_HEIGHT - 20, sdl2::Align::LEFT);
+
 
 		Screen::get().update();
 	}

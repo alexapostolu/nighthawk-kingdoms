@@ -43,6 +43,13 @@ enum class Align
 	LEFT, CENTER, RIGHT
 };
 
+enum class CircleQuad
+{
+	ALL,
+	TOP_LEFT, TOP_RIGHT,
+	BOTTOM_LEFT, BOTTOM_RIGHT
+};
+
 struct Dimension
 {
 	int x, y, w, h;

@@ -98,7 +98,7 @@ void ProdBuilding::display_item() const
 {
 	int s = 70;
 	int y = dim.y - (dim.h / 2) - (s / 2);
-	Screen::get().rect(dim.x, y, s, s,
+	Screen::get().rect(dim.x, y, s, s, 15,
 		sdl2::clr_gray, sdl2::clr_black, sdl2::Align::CENTER);
 
 	std::string prod_img;

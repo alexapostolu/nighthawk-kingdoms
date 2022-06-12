@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <stdexcept>
 
 Screen& Screen::get()
 {
@@ -49,7 +50,8 @@ void Screen::clear()
 	image("grass.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, sdl2::Align::LEFT);
 }
 
-void Screen::rect(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color const& stroke, sdl2::Align alignment)
+void Screen::rect(int x, int y, int w, int h, SDL_Color const& fill,
+	SDL_Color const& stroke, sdl2::Align alignment)
 {
 	SDL_Rect rect{ 0, 0, w, h };
 	switch (alignment)
@@ -67,7 +69,7 @@ void Screen::rect(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color c
 		rect.y = y;
 		break;
 	default:
-		std::cout << "error - not align\n";
+		throw std::runtime_error("unhandled statement");
 	};
 
 	SDL_SetRenderDrawColor(renderer.get(), fill.r, fill.g, fill.b, fill.a);
@@ -77,45 +79,146 @@ void Screen::rect(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color c
 	SDL_RenderDrawRect(renderer.get(), &rect);
 }
 
-void Screen::rhombus(int x, int y, int w, int h, SDL_Color const& fill, SDL_Color const& stroke, sdl2::Align alignment)
+void Screen::rect(int x, int y, int w, int h, int r, SDL_Color const& fill,
+	SDL_Color const& stroke, sdl2::Align alignment)
 {
-	//SDL_RenderDrawPoint(renderer.get(), center_x - y, center_y + x);
+	if (r > w / 2 || r > h / 2)
+		throw std::runtime_error("radius too large");
+
+	switch (alignment)
+	{
+	case sdl2::Align::CENTER: {
+		rect(x, y, w - (r * 2), h, fill, sdl2::clr_clear, alignment);
+		rect(x - (w / 2) + (r / 2), y, r, h - (r * 2), fill, sdl2::clr_clear, alignment);
+		rect(x + (w / 2) - (r / 2) - 1, y, r + 0, h - (r * 2), fill, sdl2::clr_clear, alignment);
+		
+		circle(x - ((w / 2) - r) - 1, y - ((h / 2) - r) - 1, r + 1, fill, stroke, 1, alignment, sdl2::CircleQuad::TOP_LEFT);
+		circle(x + ((w / 2) - r) - 1, y - ((h / 2) - r) - 1, r + 1, fill, stroke, 1, alignment, sdl2::CircleQuad::TOP_RIGHT);
+		circle(x - ((w / 2) - r) - 1, y + ((h / 2) - r) - 1, r + 1, fill, stroke, 1, alignment, sdl2::CircleQuad::BOTTOM_LEFT);
+		circle(x + ((w / 2) - r) - 1, y + ((h / 2) - r) - 1, r + 1, fill, stroke, 1, alignment, sdl2::CircleQuad::BOTTOM_RIGHT);
+
+		SDL_SetRenderDrawColor(renderer.get(), stroke.r, stroke.g, stroke.b, stroke.a);
+		SDL_RenderDrawLine(renderer.get(), x - (w / 2) - 2, y - (h / 2) + r, x - (w / 2) - 2, y + (h / 2) - r);
+		SDL_RenderDrawLine(renderer.get(), x + (w / 2), y - (h / 2) + r, x + (w / 2), y + (h / 2) - r);
+		SDL_RenderDrawLine(renderer.get(), x - (w / 2) + r, y - (h / 2) - 2, x + (w / 2) - r, y - (h / 2) - 2);
+		SDL_RenderDrawLine(renderer.get(), x - (w / 2) + r, y + (h / 2), x + (w / 2) - r, y + (h / 2));
+
+		break;
+	}
+	default:
+		throw std::runtime_error("unhandled case");
+	}
 }
 
-void Screen::circle(int center_x, int center_y, int r)
+void Screen::circle(int const x, int const y, int const r, SDL_Color const& fill,
+	SDL_Color const& stroke, int weight, sdl2::Align alignment, sdl2::CircleQuad quad)
 {
-	const int diameter = r * 2;
-
-	int x = r - 1;
-	int y = 0;
-	int tx = 1;
-	int ty = 1;
-	int error = tx - diameter;
-
-	while (x >= y)
+	SDL_SetRenderDrawColor(renderer.get(), fill.r, fill.g, fill.b, fill.a);
+	switch (quad)
 	{
-		SDL_RenderDrawPoint(renderer.get(), center_x + x, center_y - y);
-		SDL_RenderDrawPoint(renderer.get(), center_x + x, center_y + y);
-		SDL_RenderDrawPoint(renderer.get(), center_x - x, center_y - y);
-		SDL_RenderDrawPoint(renderer.get(), center_x - x, center_y + y);
-		SDL_RenderDrawPoint(renderer.get(), center_x + y, center_y - x);
-		SDL_RenderDrawPoint(renderer.get(), center_x + y, center_y + x);
-		SDL_RenderDrawPoint(renderer.get(), center_x - y, center_y - x);
-		SDL_RenderDrawPoint(renderer.get(), center_x - y, center_y + x);
-
-		if (error <= 0)
+	case sdl2::CircleQuad::ALL: {
+		for (int w = 0; w < r * 2; ++w)
 		{
-			++y;
-			error += ty;
-			ty += 2;
+			for (int h = 0; h < r * 2; ++h)
+			{
+				int dx = r - w;
+				int dy = r - h;
+				if ((dx * dx) + (dy * dy) <= r * r)
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+			}
 		}
-
-		if (error > 0)
+		break;
+	}
+	case sdl2::CircleQuad::TOP_LEFT: {
+		for (int w = r; w < r * 2 + weight; ++w)
 		{
-			--x;
-			tx += 2;
-			error += (tx - diameter);
+			for (int h = r; h < r * 2 + weight; ++h)
+			{
+				int dx = r - w;
+				int dy = r - h;
+				int d = (dx * dx) + (dy * dy);
+				if (d <= r * r)
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+				
+				double t = (double)std::sqrt(d) - r;
+				if (t >= 0 && t <= weight)
+				{
+					SDL_SetRenderDrawColor(renderer.get(), stroke.r, stroke.g, stroke.b, stroke.a);
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+					SDL_SetRenderDrawColor(renderer.get(), fill.r, fill.g, fill.b, fill.a);
+				}
+			}
 		}
+		break;
+	}
+	case sdl2::CircleQuad::TOP_RIGHT: {
+		for (int w = -weight; w < r; ++w)
+		{
+			for (int h = r; h < r * 2 + weight; ++h)
+			{
+				int dx = r - w;
+				int dy = r - h;
+				int d = (dx * dx) + (dy * dy);
+				if (d < r * r)
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+
+				double t = (double)std::sqrt(d) - r;
+				if (t >= 0 && t <= weight)
+				{
+					SDL_SetRenderDrawColor(renderer.get(), stroke.r, stroke.g, stroke.b, stroke.a);
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+					SDL_SetRenderDrawColor(renderer.get(), fill.r, fill.g, fill.b, fill.a);
+				}
+			}
+		}
+		break;
+	}
+	case sdl2::CircleQuad::BOTTOM_LEFT: {
+		for (int w = r; w < r * 2 + weight; ++w)
+		{
+			for (int h = -weight; h < r; ++h)
+			{
+				int dx = r - w;
+				int dy = r - h;
+				int d = (dx * dx) + (dy * dy);
+				if (d <= r * r)
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+
+				double t = (double)std::sqrt(d) - r;
+				if (t >= 0 && t <= weight)
+				{
+					SDL_SetRenderDrawColor(renderer.get(), stroke.r, stroke.g, stroke.b, stroke.a);
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+					SDL_SetRenderDrawColor(renderer.get(), fill.r, fill.g, fill.b, fill.a);
+				}
+			}
+		}
+		break;
+	}
+	case sdl2::CircleQuad::BOTTOM_RIGHT: {
+		for (int w = -weight; w < r; ++w)
+		{
+			for (int h = -weight; h < r; ++h)
+			{
+				int dx = r - w;
+				int dy = r - h;
+				int d = (dx * dx) + (dy * dy);
+				if ((dx * dx) + (dy * dy) <= r * r)
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+
+				double t = (double)std::sqrt(d) - r;
+				if (t >= 0 && t <= weight)
+				{
+					SDL_SetRenderDrawColor(renderer.get(), stroke.r, stroke.g, stroke.b, stroke.a);
+					SDL_RenderDrawPoint(renderer.get(), x + dx, y + dy);
+					SDL_SetRenderDrawColor(renderer.get(), fill.r, fill.g, fill.b, fill.a);
+				}
+			}
+		}
+		break;
+	}
+	default:
+		throw std::runtime_error("unhandled case");
 	}
 }
 
