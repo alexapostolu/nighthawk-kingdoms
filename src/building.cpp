@@ -1,5 +1,6 @@
 #include "building.hpp"
 #include "screen.hpp"
+#include "item.hpp"
 
 #include <iostream>
 #include <cmath>
@@ -128,44 +129,35 @@ void ProdBuilding::display_item() const
 
 void ProdBuilding::collect_item(int& gold, int& wheat, int& wood, int& stone, int& iron)
 {
-	static std::random_device dev;
-	static std::mt19937 rng(dev());
-
+	std::string img;
 	switch (type)
 	{
 	case ProdType::GOLD:
 		gold += amount;
+		img = "gold.png";
 		break;
 	case ProdType::WHEAT:
 		wheat += amount;
+		img = "wheat.png";
 		break;
 	case ProdType::WOOD:
 		wood += amount;
+		img = "wood.png";
 		break;
 	case ProdType::STONE:
 		stone += amount;
+		img = "stone.png";
 		break;
 	case ProdType::IRON:
 		iron += amount;
+		img = "iron.png";
 		break;
 	}
 
 	amount = 0;
 
-	static std::uniform_int_distribution<int> disty(5, 10);
-	static std::uniform_int_distribution<int> distx(-10, 10);
-
 	for (int i = 0; i < 10; ++i)
-	{
-		// x, y, vx, vy, ax, ay, jx, jy, alpha
-		collect_items.push_back({
-			distx(rng) * 2.0, 0,
-			distx(rng) / 10.0, -2,
-			0, disty(rng) / 200.0,
-			0, -0.00010,
-			255
-		});
-	}
+		collect_items.push_back(Item(img, dim.x, dim.y - (dim.h / 2)));
 }
 
 void ProdBuilding::display_item_collect()
@@ -174,44 +166,10 @@ void ProdBuilding::display_item_collect()
 	{
 		auto& coefs = *it;
 
-		coefs[0] += coefs[2];
-		coefs[1] += coefs[3];
+		it->display();
+		it->move();
 
-		coefs[2] += coefs[4];
-		coefs[3] += coefs[5];
-
-		coefs[5] += coefs[7];
-
-		coefs[8] -= 1;
-
-		std::string prod_img;
-		switch (type)
-		{
-		case ProdType::GOLD:
-			prod_img = "gold.png";
-			break;
-		case ProdType::WHEAT:
-			prod_img = "wheat.png";
-			break;
-		case ProdType::WOOD:
-			prod_img = "wood.png";
-			break;
-		case ProdType::STONE:
-			prod_img = "stone.png";
-			break;
-		case ProdType::IRON:
-			prod_img = "iron.png";
-			break;
-		}
-
-		auto p = Screen::get().get_img_dim(prod_img);
-		int h = p.second / (p.first / 45);
-
-		int x = dim.x;
-		int y = dim.y - (dim.h / 2);
-		Screen::get().image(prod_img, dim.x + coefs[0], y + coefs[1], 45, h, sdl2::Align::CENTER, (int)coefs[8]);
-
-		if (std::abs(coefs[0]) > 130 || coefs[1] > 90 || coefs[8] <= 0)
+		if (it->out_of_range())
 			it = collect_items.erase(it);
 		else
 			++it;

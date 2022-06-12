@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cmath>
 #include <string>
+#include <memory>
 
 #define n_ptr else std::cout << "[error] - " << '\n';
 
@@ -18,6 +19,23 @@ void SDL_Deleter::operator()(SDL_Surface* ptr) { if (ptr) SDL_FreeSurface(ptr); 
 void SDL_Deleter::operator()(SDL_Texture* ptr) { if (ptr) SDL_DestroyTexture(ptr); n_ptr }
 
 void SDL_Deleter::operator()(TTF_Font* ptr) { if (ptr) TTF_CloseFont(ptr); n_ptr }
+
+int rand_int(int const lb, int const ub)
+{
+	static std::random_device dev;
+	static std::mt19937 rng(dev());
+
+	std::uniform_int_distribution<int> dist(lb, ub);
+	return dist(rng);
+}
+
+double rand_dbl(double const lb, double const ub)
+{
+	static std::default_random_engine eng;
+
+	std::uniform_real_distribution<double> dist(lb, ub);
+	return dist(eng);
+}
 
 Text::Text(std::string const& _text, int _x, int _y, Align _align)
 	: text(_text), dim({ _x, _y, 0, 0 }), align(_align)

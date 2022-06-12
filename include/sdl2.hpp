@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <string>
+#include <random>
 
 namespace sdl2
 {
@@ -26,6 +27,13 @@ using texture_ptr  = std::unique_ptr<SDL_Texture,  SDL_Deleter>;
 
 using font_ptr = std::unique_ptr<TTF_Font, SDL_Deleter>;
 
+
+
+
+// inclusive
+int rand_int(int const lb, int const ub);
+// inclusive, 1 decial place
+double rand_dbl(double const lb, double const ub);
 
 
 // text fonts, colours, and alignment

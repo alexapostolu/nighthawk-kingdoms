@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sdl2.hpp"
+#include "item.hpp"
 
 #include <memory>
 #include <string>
@@ -81,5 +82,5 @@ private:
 	int display_cap;
 	int storage_cap;
 
-	std::vector<std::vector<double>> collect_items;
+	std::vector<Item> collect_items;
 };
