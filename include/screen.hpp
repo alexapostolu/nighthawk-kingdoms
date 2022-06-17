@@ -25,13 +25,20 @@ public:
 	void clear();
 
 	// Xiaolin Wu's algorithm
-	void line(int x0, int y0, int x1, int y1, SDL_Color const& color, int weight);
+	void line(int x0, int y0, int x1, int y1, SDL_Color const& colour, int weight);
+
+	void trig(int x0, int y0, int x1, int y1, int x2, int y2,
+		SDL_Color const& fill, SDL_Color const& stroke, int weight,
+		sdl2::Align align = sdl2::Align::CENTER);
+	
 	void rect(int x, int y, int w, int h, SDL_Color const& fill,
-		SDL_Color const& stroke, sdl2::Align alignment = sdl2::Align::LEFT);
+		SDL_Color const& stroke, sdl2::Align align = sdl2::Align::LEFT);
+
 	void rect(int x, int y, int w, int h, int r, SDL_Color const& fill,
-		SDL_Color const& stroke, sdl2::Align alignment = sdl2::Align::LEFT);
+		SDL_Color const& stroke, sdl2::Align align = sdl2::Align::LEFT);
+	
 	void circle(int const x, int const y, int const r, SDL_Color const& fill,
-		SDL_Color const& stroke, int weight, sdl2::Align alignment = sdl2::Align::CENTER,
+		SDL_Color const& stroke, int weight, sdl2::Align align = sdl2::Align::CENTER,
 		sdl2::CircleQuad quad = sdl2::CircleQuad::ALL);
 
 	// x, y is where the text starts, align is where the text starts

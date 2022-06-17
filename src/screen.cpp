@@ -53,42 +53,42 @@ void Screen::clear()
 
 void Screen::line(int x0, int y0, int x1, int y1, SDL_Color const& color, int weight)
 {
-	auto round = [](int x) { return std::floor(x + 0.5); };
-	auto fpart = [](int x) { return x - floor(x); };
-	auto rfpart = [&](int x) { return 1 - fpart(x); };
-	auto plot = [&](int x, int y, int a) {
-		SDL_SetRenderDrawColor(renderer.get(), color.r, color.g, color.b, a * color.a);
-		SDL_RenderDrawPoint(renderer.get(), x, y);
+	auto plot = [&](double x, double y, double a) {
+		SDL_SetRenderDrawColor(renderer.get(), color.r, color.g, color.b, color.a * a);
+		SDL_RenderDrawPoint(renderer.get(), (int)x, (int)y);
 	};
+
+	auto round = [&](double x) { return std::floor(x + 0.5); };
+	auto fpart = [](double x) { return x - floor(x); };
+	auto rfpart = [&](double x) { return 1 - fpart(x); };
 
 	bool steep = std::abs(y1 - y0) > std::abs(x1 - x0);
     
-    if (steep)
+	if (steep)
 	{
 		std::swap(x0, y0);
 		std::swap(x1, y1);
-    }
+	}
 	if (x0 > x1)
 	{
 		std::swap(x0, x1);
 		std::swap(y0, y1);
 	}
     
-	int dx = x1 - x0;
-	int dy = y1 - y0;
+	double dx = x1 - x0;
+	double dy = y1 - y0;
 
-	int gradient;
+	double gradient = 0;
 	if (dx == 0)
 		gradient = 1.0;
 	else
 		gradient = dy / dx;
 
-    // handle first endpoint
-	int xend = std::round(x0);
-	int yend = y0 + gradient * (xend - x0);
-	int xgap = rfpart(x0 + 0.5);
-	int xpxl1 = xend;
-	int ypxl1 = std::floor(yend);
+	double xend = round(x0);
+	double yend = y0 + gradient * (xend - x0);
+	double xgap = rfpart(x0 + 0.5);
+	double xpxl1 = xend;
+	double ypxl1 = std::floor(yend);
 	if (steep)
 	{
 		plot(ypxl1, xpxl1, rfpart(yend) * xgap);
@@ -99,15 +99,14 @@ void Screen::line(int x0, int y0, int x1, int y1, SDL_Color const& color, int we
 		plot(xpxl1, ypxl1, rfpart(yend) * xgap);
 		plot(xpxl1, ypxl1 + 1, fpart(yend) * xgap);
 	}
-
-	int intery = yend + gradient;
     
-    // handle second endpoint
+	double intery = yend + gradient;
+    
 	xend = round(x1);
 	yend = y1 + gradient * (xend - x1);
 	xgap = fpart(x1 + 0.5);
-	int xpxl2 = xend;
-	int ypxl2 = std::floor(yend);
+	double xpxl2 = xend;
+	double ypxl2 = std::floor(yend);
 	if (steep)
 	{
 		plot(ypxl2, xpxl2, rfpart(yend) * xgap);
@@ -119,23 +118,41 @@ void Screen::line(int x0, int y0, int x1, int y1, SDL_Color const& color, int we
 		plot(xpxl2, ypxl2 + 1, fpart(yend) * xgap);
 	}
     
-	if (steep)
+	for (double i = xpxl1 + 1; i <= xpxl2 - 1; ++i)
 	{
-		for (int i = xpxl1 + 1; i <= xpxl2 - 1; ++i)
+		if (steep)
 		{
 			plot(std::floor(intery), i, rfpart(intery));
 			plot(std::floor(intery) + 1, i, fpart(intery));
-			intery = intery + gradient;
 		}
-	}
-	else
-	{
-		for (int i = xpxl1 + 1; i <= xpxl2 - 1; ++i)
+		else
 		{
 			plot(i, std::floor(intery), rfpart(intery));
 			plot(i, std::floor(intery) + 1, fpart(intery));
-			intery = intery + gradient;
 		}
+		
+		intery += gradient;
+	}
+}
+
+void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
+	SDL_Color const& fill, SDL_Color const& stroke, int weight,
+	sdl2::Align align = sdl2::Align::CENTER)
+{
+	if (y1 < y0)
+	{
+		std::swap(x0, x1);
+		std::swap(y0, y1);
+	}
+	if (y2 < y0)
+	{
+		std::swap(x0, x2);
+		std::swap(y0, y2);
+	}
+	if (y2 < y1)
+	{
+		std::swap(x1, x2);
+		std::swap(y1, y2);
 	}
 }
 
@@ -189,7 +206,7 @@ void Screen::rect(int x, int y, int w, int h, int r, SDL_Color const& fill,
 		line(x - (w / 2) - 2, y - (h / 2) + r, x - (w / 2) - 2, y + (h / 2) - r, stroke, 1);
 		line(x + (w / 2), y - (h / 2) + r, x + (w / 2), y + (h / 2) - r, stroke, 1);
 		line(x + (w / 2) - 1, y - (h / 2) + r, x + (w / 2) - 1, y + (h / 2) - r, { stroke.r, stroke.g, stroke.b,
-			(unsigned char)stroke.a / 3 }, 1);
+			(unsigned char)(stroke.a / 3) }, 1);
 		line(x - (w / 2) + r, y - (h / 2) - 2, x + (w / 2) - r, y - (h / 2) - 2, stroke, 1);
 		line(x - (w / 2) + r, y + (h / 2), x + (w / 2) - r, y + (h / 2), stroke, 1);
 
