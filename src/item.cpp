@@ -6,6 +6,7 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
+#include <iostream>
 
 Item::Item(std::string const& _img, int _x, int _y)
 	: img(_img)
@@ -37,7 +38,7 @@ void Item::move()
 	ax += jx;
 	ay += jy;
 
-	alpha -= 2;
+	alpha -= 2.5;
 }
 
 bool Item::out_of_range() const

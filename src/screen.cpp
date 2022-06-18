@@ -137,7 +137,7 @@ void Screen::line(int x0, int y0, int x1, int y1, SDL_Color const& color, int we
 
 void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
 	SDL_Color const& fill, SDL_Color const& stroke, int weight,
-	sdl2::Align align = sdl2::Align::CENTER)
+	sdl2::Align align)
 {
 	if (y1 < y0)
 	{
