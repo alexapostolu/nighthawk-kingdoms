@@ -248,6 +248,8 @@ void Base::handle_mouse_pressed(int x, int y)
 
 void Base::handle_mouse_dragged(int x, int y)
 {
+	Screen::get().rhom(x, y, 100, 50, sdl2::clr_green, sdl2::clr_clear, 1);
+
 	if (shop_state == ShopState::VISIBLE)
 	{
 		assert(place == nullptr);
@@ -412,53 +414,54 @@ void Base::display_grid()
 	int w = 30, h = 20;
 	int side = 20;
 
-	for (int i = 1; i <= side; ++i)
-	{
-		if (i % 2) // display only odd rombus, and draw 4 lines on edges?
-		{
-			for (int j = -(i / 2); j <= i / 2; ++j)
-			{
-				Screen::get().rhom(
-					Screen::get().SCREEN_WIDTH / 2 + (w * j),
-					70 + (h * (0.5 * (i - 1))),
-					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-			}
-		}
-		else
-		{
-			for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
-			{
-				Screen::get().rhom(
-					Screen::get().SCREEN_WIDTH / 2 + (w * j),
-					70 + (h * (0.5 * (i - 1))),
-					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-			}
-		}
-	}
+	//for (int i = 1; i <= side; ++i)
+	//{
+	//	if (i % 2) // display only odd rombus, and draw 4 lines on edges?
+	//	{
+	//		for (int j = -(i / 2); j <= i / 2; ++j)
+	//		{
+	//			Screen::get().rhom(
+	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
+	//				70 + (h * (0.5 * (i - 1))),
+	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+	//		}
+	//	}
+	//	else
+	//	{
+	//		for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
+	//		{
+	//			Screen::get().rhom(
+	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
+	//				70 + (h * (0.5 * (i - 1))),
+	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+	//		}
+	//	}
+	//}
+	//for (int i = side - 1; i >= 1; --i)
+	//{
+	//	if (i % 2) // display only odd rombus, and draw 4 lines on edges?
+	//	{
+	//		for (int j = -(i / 2); j <= i / 2; ++j)
+	//		{
+	//			Screen::get().rhom(
+	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
+	//				70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
+	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+	//		}
+	//	}
+	//	else
+	//	{
+	//		for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
+	//		{
+	//			Screen::get().rhom(
+	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
+	//				70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
+	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+	//		}
+	//	}
+	//}
 
-	for (int i = side - 1; i >= 1; --i)
-	{
-		if (i % 2) // display only odd rombus, and draw 4 lines on edges?
-		{
-			for (int j = -(i / 2); j <= i / 2; ++j)
-			{
-				Screen::get().rhom(
-					Screen::get().SCREEN_WIDTH / 2 + (w * j),
-					70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
-					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-			}
-		}
-		else
-		{
-			for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
-			{
-				Screen::get().rhom(
-					Screen::get().SCREEN_WIDTH / 2 + (w * j),
-					70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
-					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-			}
-		}
-	}
+
 
 	int can_place = can_place_building(*place);
 	place->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);

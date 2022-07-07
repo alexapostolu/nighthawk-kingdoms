@@ -258,11 +258,11 @@ void Screen::rect(int x, int y, int w, int h, int r, SDL_Color const& fill,
 void Screen::rhom(int x, int y, int w, int h, SDL_Color const& fill,
 	SDL_Color const& stroke, int weight, sdl2::Align align)
 {
-	//trig(x - (w / 2), y, x, y - (h / 2), x, y + (h / 2),
-	//	fill, stroke, weight, sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
+	trig(x - (w / 2), y, x, y - (h / 2), x, y + (h / 2),
+		fill, stroke, weight, sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
 
-	//trig(x + (w / 2), y, x, y - (h / 2), x, y + (h / 2),
-	//	fill, stroke, weight, sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
+	trig(x + (w / 2), y, x, y - (h / 2), x, y + (h / 2),
+		fill, stroke, weight, sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
 }
 
 void Screen::circle(int const x, int const y, int const r, SDL_Color const& fill,
