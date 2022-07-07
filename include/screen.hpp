@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 class Screen
 {
@@ -29,7 +30,8 @@ public:
 
 	void trig(int x0, int y0, int x1, int y1, int x2, int y2,
 		SDL_Color const& fill, SDL_Color const& stroke, int weight,
-		sdl2::Align align = sdl2::Align::CENTER);
+		sdl2::Align const align = sdl2::Align::CENTER,
+		sdl2::TrigQuad const stroke_quad = sdl2::TrigQuad::ALL);
 	
 	void rect(int x, int y, int w, int h, SDL_Color const& fill,
 		SDL_Color const& stroke, sdl2::Align align = sdl2::Align::LEFT);
@@ -37,6 +39,10 @@ public:
 	void rect(int x, int y, int w, int h, int r, SDL_Color const& fill,
 		SDL_Color const& stroke, sdl2::Align align = sdl2::Align::LEFT);
 	
+	void rhom(int x, int y, int w, int h, SDL_Color const& fill,
+		SDL_Color const& stroke, int weight,
+		sdl2::Align align = sdl2::Align::CENTER);
+
 	void circle(int const x, int const y, int const r, SDL_Color const& fill,
 		SDL_Color const& stroke, int weight, sdl2::Align align = sdl2::Align::CENTER,
 		sdl2::CircleQuad quad = sdl2::CircleQuad::ALL);
@@ -55,6 +61,10 @@ public:
 
 private:
 	Screen();
+
+	// returns array of points on a line
+	// fill_dir: 0 - left, 1 - right
+	std::vector<SDL_Point> line_arr(int x0, int y0, int x1, int y1, SDL_Color const& colour, int weight);
 
 private:
 	sdl2::window_ptr window;

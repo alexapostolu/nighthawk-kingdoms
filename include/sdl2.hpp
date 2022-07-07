@@ -50,6 +50,16 @@ enum class CircleQuad
 	BOTTOM_LEFT, BOTTOM_RIGHT
 };
 
+// stroke quad for triangle
+// if two sides are both top, then the left one is top and the right one is middle
+enum class TrigQuad
+{
+	ALL,
+	TOP,
+	MIDDLE,
+	BOTTOM
+};
+
 struct Dimension
 {
 	int x, y, w, h;

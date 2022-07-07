@@ -409,12 +409,54 @@ void Base::not_enough_resources()
 
 void Base::display_grid()
 {
-	for (int i = 0; i < TILES_Y; ++i)
+	int w = 30, h = 20;
+	int side = 20;
+
+	for (int i = 1; i <= side; ++i)
 	{
-		for (int j = 0; j < TILES_X; ++j)
+		if (i % 2) // display only odd rombus, and draw 4 lines on edges?
 		{
-			Screen::get().rect((j * 20) + 5, (i * 20) + 60, 20, 20,
-				sdl2::clr_clear, sdl2::clr_white);
+			for (int j = -(i / 2); j <= i / 2; ++j)
+			{
+				Screen::get().rhom(
+					Screen::get().SCREEN_WIDTH / 2 + (w * j),
+					70 + (h * (0.5 * (i - 1))),
+					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+			}
+		}
+		else
+		{
+			for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
+			{
+				Screen::get().rhom(
+					Screen::get().SCREEN_WIDTH / 2 + (w * j),
+					70 + (h * (0.5 * (i - 1))),
+					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+			}
+		}
+	}
+
+	for (int i = side - 1; i >= 1; --i)
+	{
+		if (i % 2) // display only odd rombus, and draw 4 lines on edges?
+		{
+			for (int j = -(i / 2); j <= i / 2; ++j)
+			{
+				Screen::get().rhom(
+					Screen::get().SCREEN_WIDTH / 2 + (w * j),
+					70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
+					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+			}
+		}
+		else
+		{
+			for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
+			{
+				Screen::get().rhom(
+					Screen::get().SCREEN_WIDTH / 2 + (w * j),
+					70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
+					w, h, sdl2::clr_clear, sdl2::clr_white, 1);
+			}
 		}
 	}
 

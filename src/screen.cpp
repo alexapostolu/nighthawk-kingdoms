@@ -9,6 +9,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <algorithm>
+#include <map>
 
 Screen& Screen::get()
 {
@@ -137,7 +138,7 @@ void Screen::line(int x0, int y0, int x1, int y1, SDL_Color const& color, int we
 
 void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
 	SDL_Color const& fill, SDL_Color const& stroke, int weight,
-	sdl2::Align align)
+	sdl2::Align const align, sdl2::TrigQuad const stroke_quad)
 {
 	if (y1 < y0)
 	{
@@ -153,6 +154,43 @@ void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
 	{
 		std::swap(x1, x2);
 		std::swap(y1, y2);
+	}
+
+	if (x0 == x1)
+	{
+		std::swap(x1, x2);
+		std::swap(y1, y2);
+	}
+
+	auto pts_01 = line_arr(x0, y0, x1, y1, stroke_quad == sdl2::TrigQuad::TOP ? sdl2::clr_clear : stroke, weight);
+	auto pts_02 = line_arr(x0, y0, x2, y2, stroke_quad == sdl2::TrigQuad::MIDDLE ? sdl2::clr_clear : stroke, weight);
+	auto pts_12 = line_arr(x1, y1, x2, y2, stroke_quad == sdl2::TrigQuad::BOTTOM ? sdl2::clr_clear : stroke, weight);
+
+	// y, x
+	std::map<int, int> fill_pts, o;
+
+	for (auto const& [x, y] : pts_01)
+	{
+		if (fill_pts.find(y) == fill_pts.end() || (x1 <= x0 && x > fill_pts[y]) || (x1 > x0 && x < fill_pts[y]))
+			fill_pts[y] = x;
+	}
+
+	for (auto const& [x, y] : pts_12)
+	{
+		if (fill_pts.find(y) == fill_pts.end() || (x1 <= x0 && x > fill_pts[y]) || (x1 > x0 && x < fill_pts[y]))
+			fill_pts[y] = x;
+	}
+
+	for (auto const& [x, y] : pts_02)
+	{
+		if (o.find(y) == o.end() || (x1 <= x0 && x < fill_pts[y]) || (x1 > x0 && x > fill_pts[y]))
+			o[y] = x;
+	}
+
+	for (auto const& [y, x] : o)
+	{
+		assert(fill_pts.find(y) != fill_pts.end());
+		line(fill_pts[y], y, x, y, fill, 1);
 	}
 }
 
@@ -215,6 +253,16 @@ void Screen::rect(int x, int y, int w, int h, int r, SDL_Color const& fill,
 	default:
 		throw std::runtime_error("unhandled case");
 	}
+}
+
+void Screen::rhom(int x, int y, int w, int h, SDL_Color const& fill,
+	SDL_Color const& stroke, int weight, sdl2::Align align)
+{
+	//trig(x - (w / 2), y, x, y - (h / 2), x, y + (h / 2),
+	//	fill, stroke, weight, sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
+
+	//trig(x + (w / 2), y, x, y - (h / 2), x, y + (h / 2),
+	//	fill, stroke, weight, sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
 }
 
 void Screen::circle(int const x, int const y, int const r, SDL_Color const& fill,
@@ -398,4 +446,95 @@ void Screen::image(std::string const& img, sdl2::Dimension const& dim, sdl2::Ali
 
 	SDL_SetTextureAlphaMod(images[img].get(), alpha);
 	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
+}
+
+std::vector<SDL_Point> Screen::line_arr(int x0, int y0, int x1, int y1, SDL_Color const& color, int weight)
+{
+	std::vector<SDL_Point> pts;
+
+	auto plot = [&](double x, double y, double a) 
+	{
+		pts.push_back(SDL_Point{ (int)x, (int)y });
+		
+		SDL_SetRenderDrawColor(renderer.get(), color.r, color.g, color.b, color.a * a);
+		SDL_RenderDrawPoint(renderer.get(), (int)x, (int)y);
+	};
+
+	auto round = [&](double x) { return std::floor(x + 0.5); };
+	auto fpart = [](double x) { return x - floor(x); };
+	auto rfpart = [&](double x) { return 1 - fpart(x); };
+
+	bool steep = std::abs(y1 - y0) > std::abs(x1 - x0);
+
+	if (steep)
+	{
+		std::swap(x0, y0);
+		std::swap(x1, y1);
+	}
+	if (x0 > x1)
+	{
+		std::swap(x0, x1);
+		std::swap(y0, y1);
+	}
+
+	double dx = x1 - x0;
+	double dy = y1 - y0;
+
+	double gradient = 0;
+	if (dx == 0)
+		gradient = 1.0;
+	else
+		gradient = dy / dx;
+
+	double xend = round(x0);
+	double yend = y0 + gradient * (xend - x0);
+	double xgap = rfpart(x0 + 0.5);
+	double xpxl1 = xend;
+	double ypxl1 = std::floor(yend);
+	if (steep)
+	{
+		plot(ypxl1, xpxl1, rfpart(yend) * xgap);
+		plot(ypxl1 + 1, xpxl1, fpart(yend) * xgap);
+	}
+	else
+	{
+		plot(xpxl1, ypxl1, rfpart(yend) * xgap);
+		plot(xpxl1, ypxl1 + 1, fpart(yend) * xgap);
+	}
+
+	double intery = yend + gradient;
+
+	xend = round(x1);
+	yend = y1 + gradient * (xend - x1);
+	xgap = fpart(x1 + 0.5);
+	double xpxl2 = xend;
+	double ypxl2 = std::floor(yend);
+	if (steep)
+	{
+		plot(ypxl2, xpxl2, rfpart(yend) * xgap);
+		plot(ypxl2 + 1, xpxl2, fpart(yend) * xgap);
+	}
+	else
+	{
+		plot(xpxl2, ypxl2, rfpart(yend) * xgap);
+		plot(xpxl2, ypxl2 + 1, fpart(yend) * xgap);
+	}
+
+	for (double i = xpxl1 + 1; i <= xpxl2 - 1; ++i)
+	{
+		if (steep)
+		{
+			plot(std::floor(intery), i, rfpart(intery));
+			plot(std::floor(intery) + 1, i, fpart(intery));
+		}
+		else
+		{
+			plot(i, std::floor(intery), rfpart(intery));
+			plot(i, std::floor(intery) + 1, fpart(intery));
+		}
+
+		intery += gradient;
+	}
+
+	return pts;
 }
