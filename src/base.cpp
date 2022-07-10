@@ -372,6 +372,12 @@ void Base::display_base_buildings()
 	{
 		building->display_building(place != nullptr && building != place);
 		building->display_item_collect();
+
+		if (building == place)
+		{
+			int can_place = can_place_building(*building);
+			building->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);
+		}
 	}
 }
 
@@ -411,60 +417,30 @@ void Base::not_enough_resources()
 
 void Base::display_grid()
 {
-	int w = 30, h = 20;
-	int side = 20;
+	int const sides = 9;
+	int const w = 70;
+	int const h = 50;
 
-	//for (int i = 1; i <= side; ++i)
-	//{
-	//	if (i % 2) // display only odd rombus, and draw 4 lines on edges?
-	//	{
-	//		for (int j = -(i / 2); j <= i / 2; ++j)
-	//		{
-	//			Screen::get().rhom(
-	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
-	//				70 + (h * (0.5 * (i - 1))),
-	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-	//		}
-	//	}
-	//	else
-	//	{
-	//		for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
-	//		{
-	//			Screen::get().rhom(
-	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
-	//				70 + (h * (0.5 * (i - 1))),
-	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-	//		}
-	//	}
-	//}
-	//for (int i = side - 1; i >= 1; --i)
-	//{
-	//	if (i % 2) // display only odd rombus, and draw 4 lines on edges?
-	//	{
-	//		for (int j = -(i / 2); j <= i / 2; ++j)
-	//		{
-	//			Screen::get().rhom(
-	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
-	//				70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
-	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-	//		}
-	//	}
-	//	else
-	//	{
-	//		for (double j = -(i / 2.0) + 0.5; j <= (i / 2.0) - 0.5; ++j)
-	//		{
-	//			Screen::get().rhom(
-	//				Screen::get().SCREEN_WIDTH / 2 + (w * j),
-	//				70 + (side / 2 * h) + (h * (0.5 * (side - i - 1))),
-	//				w, h, sdl2::clr_clear, sdl2::clr_white, 1);
-	//		}
-	//	}
-	//}
+	int const x_base = Screen::get().SCREEN_WIDTH / 2;
+	int const y_base = 60;
 
+	for (int i = 0; i < sides + 1; ++i)
+	{
+		int const x0_off = i * (w / 2);
+		int const y0_off = i * (h / 2);
+		int const x1_off = ((w / 2) * sides) - (i * w / 2);
+		int const y1_off = ((h / 2) * sides) + (i * h / 2);
 
+		Screen::get().line(
+			x_base - x0_off, y_base + y0_off,
+			x_base + x1_off, y_base + y1_off,
+			sdl2::clr_white, 1);
 
-	int can_place = can_place_building(*place);
-	place->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);
+		Screen::get().line(
+			x_base + x0_off, y_base + y0_off,
+			x_base - x1_off, y_base + y1_off,
+			sdl2::clr_white, 1);
+	}
 }
 
 bool Base::shared_ptr_comp::operator() (std::shared_ptr<Building> const& a, std::shared_ptr<Building> const& b) const
