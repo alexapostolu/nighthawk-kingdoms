@@ -65,8 +65,12 @@ void Base::set_building_dim()
 
 void Base::display_resources()
 {
-	Screen::get().rect(0, 0, Screen::get().SCREEN_WIDTH, 50, sdl2::clr_black, sdl2::clr_clear);
-	Screen::get().rect(0, 50, Screen::get().SCREEN_WIDTH, 5, sdl2::clr_yellow, sdl2::clr_clear);
+	Screen::get().fill(sdl2::clr_black);
+	Screen::get().stroke(sdl2::clr_clear);
+	Screen::get().rect(0, 0, Screen::get().SCREEN_WIDTH, 50);
+
+	Screen::get().fill(sdl2::clr_yellow);
+	Screen::get().rect(0, 50, Screen::get().SCREEN_WIDTH, 5);
 
 	std::string str[] = {
 		"Gold: " + std::to_string(Base::get().gold),
@@ -89,12 +93,13 @@ void Base::display_resources()
 	TTF_SizeText(ttf_font.get(), str[3].c_str(), &text_w, &text_h);
 	int margin = (Screen::get().SCREEN_WIDTH - (Screen::get().SCREEN_WIDTH / 4 * 3 + text_w)) / 2;
 
+	Screen::get().fill(sdl2::clr_yellow);
 	for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i)
 	{
 		Screen::get().image(imgs[i],
 			(Screen::get().SCREEN_WIDTH / 4 * i) + margin - 10, 4, 40, 40, sdl2::Align::RIGHT);
 
-		Screen::get().text(str[i], sdl2::clr_yellow, sdl2::str_brygada, 24,
+		Screen::get().text(str[i], sdl2::str_brygada, 24,
 			(Screen::get().SCREEN_WIDTH / 4 * i) + margin , 10, sdl2::Align::LEFT);
 	}
 }
@@ -126,7 +131,8 @@ void Base::display_shop()
 	case ShopState::HIDDEN: {
 		if (place == nullptr)
 		{
-			Screen::get().text("BUILD", sdl2::clr_white, sdl2::str_brygada, 45,
+			Screen::get().fill(sdl2::clr_white);
+			Screen::get().text("BUILD", sdl2::str_brygada, 45,
 				text_build.dim.x, text_build.dim.y, text_build.align);
 		}
 
@@ -135,7 +141,9 @@ void Base::display_shop()
 		break;
 	}
 	case ShopState::APPEARING: {
-		Screen::get().rect(0, shop_y, Screen::get().SCREEN_WIDTH, Screen::get().SCREEN_HEIGHT - shop_h, sdl2::clr_black, sdl2::clr_clear);
+		Screen::get().fill(sdl2::clr_black);
+		Screen::get().stroke(sdl2::clr_clear);
+		Screen::get().rect(0, shop_y, Screen::get().SCREEN_WIDTH, Screen::get().SCREEN_HEIGHT - shop_h);
 
 		shop_y -= shop_spd;
 		if (shop_y <= shop_h)
@@ -147,9 +155,12 @@ void Base::display_shop()
 		break;
 	}
 	case ShopState::VISIBLE: {
-		Screen::get().rect(0, shop_h, Screen::get().SCREEN_WIDTH, Screen::get().SCREEN_HEIGHT - shop_h, sdl2::clr_black, sdl2::clr_clear);
+		Screen::get().fill(sdl2::clr_black);
+		Screen::get().stroke(sdl2::clr_clear);
+		Screen::get().rect(0, shop_h, Screen::get().SCREEN_WIDTH, Screen::get().SCREEN_HEIGHT - shop_h);
 
-		Screen::get().text("CLOSE", sdl2::clr_white, sdl2::str_brygada, 35,
+		Screen::get().fill(sdl2::clr_white);
+		Screen::get().text("CLOSE", sdl2::str_brygada, 35,
 			Screen::get().SCREEN_WIDTH - 15, shop_h - 40, sdl2::Align::RIGHT);
 
 		for (auto const& building : shop_buildings)
@@ -158,7 +169,9 @@ void Base::display_shop()
 		break;
 	}
 	case ShopState::DISAPPEARING: {
-		Screen::get().rect(0, shop_y, Screen::get().SCREEN_WIDTH, Screen::get().SCREEN_HEIGHT - shop_h, sdl2::clr_black, sdl2::clr_clear);
+		Screen::get().fill(sdl2::clr_black);
+		Screen::get().stroke(sdl2::clr_clear);
+		Screen::get().rect(0, shop_y, Screen::get().SCREEN_WIDTH, Screen::get().SCREEN_HEIGHT - shop_h);
 
 		shop_y += shop_spd;
 		if (shop_y >= Screen::get().SCREEN_HEIGHT)
@@ -248,7 +261,9 @@ void Base::handle_mouse_pressed(int x, int y)
 
 void Base::handle_mouse_dragged(int x, int y)
 {
-	Screen::get().rhom(x, y, 100, 50, sdl2::clr_green, sdl2::clr_clear, 1);
+	Screen::get().fill(sdl2::clr_green);
+	Screen::get().stroke(sdl2::clr_clear);
+	Screen::get().rhom(x, y, 100, 50);
 
 	if (shop_state == ShopState::VISIBLE)
 	{
@@ -370,14 +385,14 @@ void Base::display_base_buildings()
 {
 	for (auto& building : base_buildings)
 	{
-		building->display_building(place != nullptr && building != place);
-		building->display_item_collect();
-
 		if (building == place)
 		{
 			int can_place = can_place_building(*building);
 			building->display_backdrop(!can_place ? sdl2::clr_green : sdl2::clr_red);
 		}
+
+		building->display_building(place != nullptr && building != place);
+		building->display_item_collect();
 	}
 }
 
@@ -400,10 +415,12 @@ void Base::not_enough_resources()
 {
 	for (auto it = resources_msg.begin(); it != resources_msg.end();)
 	{
-		auto const [end, txt] = *it;
+		auto const& [end, txt] = *it;
 
 		float alpha = 1 - (end - txt.dim.y) / 100.0;
-		Screen::get().text(txt.text, SDL_Color{ 255, 255, 255, (uint8_t)(255 * alpha) }, sdl2::str_brygada, 20,
+
+		Screen::get().fill(255, 255, 255, (uint8_t)(255 * alpha));
+		Screen::get().text(txt.text, sdl2::str_brygada, 20,
 			txt.dim.x, txt.dim.y, txt.align);
 
 		it->second.dim.y--;
@@ -431,15 +448,15 @@ void Base::display_grid()
 		int const x1_off = ((w / 2) * sides) - (i * w / 2);
 		int const y1_off = ((h / 2) * sides) + (i * h / 2);
 
+		Screen::get().stroke(sdl2::clr_white);
+
 		Screen::get().line(
 			x_base - x0_off, y_base + y0_off,
-			x_base + x1_off, y_base + y1_off,
-			sdl2::clr_white, 1);
+			x_base + x1_off, y_base + y1_off);
 
 		Screen::get().line(
 			x_base + x0_off, y_base + y0_off,
-			x_base - x1_off, y_base + y1_off,
-			sdl2::clr_white, 1);
+			x_base - x1_off, y_base + y1_off);
 	}
 }
 

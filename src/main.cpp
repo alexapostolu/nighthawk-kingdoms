@@ -96,16 +96,19 @@ int main(int argc, char* argv[])
 
 		if (tutorial)
 		{
-			Screen::get().rect(100, 80, 850, 200, sdl2::clr_black, sdl2::clr_white);
+			Screen::get().fill(sdl2::clr_black);
+			Screen::get().stroke(sdl2::clr_white);
+			Screen::get().rect(100, 80, 850, 200);
 		}
 
 		Base::get().display_resources();
 
 		if (tutorial)
 		{
-			Screen::get().text("Welcome to Nighthawk: Kingdoms!", sdl2::clr_yellow, sdl2::str_brygada, 24, 120, 100, sdl2::Align::LEFT);
-			Screen::get().text("Here you can build your own kingdom and collect resources!", sdl2::clr_yellow, sdl2::str_brygada, 24, 120, 140, sdl2::Align::LEFT);
-			Screen::get().text("Click the shop button to place your first building, then you are good to go!", sdl2::clr_yellow, sdl2::str_brygada, 24, 120, 180, sdl2::Align::LEFT);
+			Screen::get().fill(sdl2::clr_yellow);
+			Screen::get().text("Welcome to Nighthawk: Kingdoms!", sdl2::str_brygada, 24, 120, 100, sdl2::Align::LEFT);
+			Screen::get().text("Here you can build your own kingdom and collect resources!", sdl2::str_brygada, 24, 120, 140, sdl2::Align::LEFT);
+			Screen::get().text("Click the shop button to place your first building, then you are good to go!", sdl2::str_brygada, 24, 120, 180, sdl2::Align::LEFT);
 		}
 
 		bool const second = SDL_GetTicks() - timer >= 1000;
@@ -115,7 +118,8 @@ int main(int argc, char* argv[])
 		Base::get().display_scene(second);
 		Base::get().display_shop();
 
-		Screen::get().text("frames: " + std::to_string(framec), sdl2::clr_white,
+		Screen::get().fill(sdl2::clr_white);
+		Screen::get().text("frames: " + std::to_string(framec),
 			sdl2::str_brygada, 10, 10, Screen::get().SCREEN_HEIGHT - 20, sdl2::Align::LEFT);
 
 

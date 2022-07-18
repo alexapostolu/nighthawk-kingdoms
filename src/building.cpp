@@ -32,8 +32,10 @@ void Building::display_backdrop(SDL_Color const& clr) const
 	rect_h = (rect_h + (rect_h % 2)) * 20;
 
 	int h = height_d * 20;
-	Screen::get().rect(dim.x, dim.y + (h / 2), rect_w, rect_h - h, clr,
-		sdl2::clr_clear, sdl2::Align::CENTER);
+	Screen::get().fill(clr);
+	Screen::get().stroke(sdl2::clr_clear);
+	Screen::get().rhom(dim.x, dim.y, rect_w, rect_h,
+		sdl2::Align::CENTER);
 }
 
 void Building::display_placement_options() const
@@ -98,8 +100,10 @@ void ProdBuilding::display_item() const
 {
 	int s = 70;
 	int y = dim.y - (dim.h / 2) - (s / 2);
-	Screen::get().rect(dim.x, y, s, s, 15,
-		sdl2::clr_gray, sdl2::clr_black, sdl2::Align::CENTER);
+
+	Screen::get().fill(sdl2::clr_gray);
+	Screen::get().stroke(sdl2::clr_black);
+	Screen::get().rect(dim.x, y, s, s, 15, sdl2::Align::CENTER);
 
 	std::string prod_img;
 	sdl2::Dimension img_dim{ dim.x, y, 50, 0 };
