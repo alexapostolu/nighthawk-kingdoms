@@ -118,6 +118,12 @@ void Base::display_scene(bool second)
 		place->display_placement_options();
 
 	not_enough_resources();
+
+	
+	Screen::get().stroke(sdl2::clr_black);
+	Screen::get().fill(sdl2::clr_white);
+	Screen::get().trig(200, 200, 250, 150, 250, 250,
+		sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
 }
 
 void Base::display_shop()

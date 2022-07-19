@@ -20,7 +20,8 @@ Screen& Screen::get()
 Screen::Screen()
 	: SCREEN_WIDTH(1170), SCREEN_HEIGHT(525)
 	, fill_clr(sdl2::clr_clear), stroke_clr(sdl2::clr_clear)
-	, stroke_weight(1) {}
+	, stroke_weight(1)
+	, m_line_mode(sdl2::LineMode::ANTIALIASING) {}
 
 void Screen::set_window()
 {
@@ -69,94 +70,58 @@ void Screen::stroke(SDL_Color const& clr)
 	stroke_clr = clr;
 }
 
+void Screen::line_mode(sdl2::LineMode const& mode)
+{
+	m_line_mode = mode;
+}
+
 void Screen::line(int x0, int y0, int x1, int y1)
 {
-	auto plot = [&](double x, double y, double a) {
-		SDL_SetRenderDrawColor(renderer.get(), stroke_clr.r, stroke_clr.g, stroke_clr.b, stroke_clr.a * a);
-		SDL_RenderDrawPoint(renderer.get(), (int)x, (int)y);
-	};
-
-	auto round = [&](double x) { return std::floor(x + 0.5); };
-	auto fpart = [](double x) { return x - floor(x); };
-	auto rfpart = [&](double x) { return 1 - fpart(x); };
-
-	bool steep = std::abs(y1 - y0) > std::abs(x1 - x0);
-    
-	if (steep)
+	switch (m_line_mode)
 	{
-		std::swap(x0, y0);
-		std::swap(x1, y1);
-	}
-	if (x0 > x1)
-	{
-		std::swap(x0, x1);
-		std::swap(y0, y1);
-	}
-    
-	double dx = x1 - x0;
-	double dy = y1 - y0;
-
-	double gradient = 0;
-	if (dx == 0)
-		gradient = 1.0;
-	else
-		gradient = dy / dx;
-
-	double xend = round(x0);
-	double yend = y0 + gradient * (xend - x0);
-	double xgap = rfpart(x0 + 0.5);
-	double xpxl1 = xend;
-	double ypxl1 = std::floor(yend);
-	if (steep)
-	{
-		plot(ypxl1, xpxl1, rfpart(yend) * xgap);
-		plot(ypxl1 + 1, xpxl1, fpart(yend) * xgap);
-	}
-	else
-	{
-		plot(xpxl1, ypxl1, rfpart(yend) * xgap);
-		plot(xpxl1, ypxl1 + 1, fpart(yend) * xgap);
-	}
-    
-	double intery = yend + gradient;
-    
-	xend = round(x1);
-	yend = y1 + gradient * (xend - x1);
-	xgap = fpart(x1 + 0.5);
-	double xpxl2 = xend;
-	double ypxl2 = std::floor(yend);
-	if (steep)
-	{
-		plot(ypxl2, xpxl2, rfpart(yend) * xgap);
-		plot(ypxl2 + 1, xpxl2, fpart(yend) * xgap);
-	}
-	else
-	{
-		plot(xpxl2, ypxl2, rfpart(yend) * xgap);
-		plot(xpxl2, ypxl2 + 1, fpart(yend) * xgap);
-	}
-    
-	for (double i = xpxl1 + 1; i <= xpxl2 - 1; ++i)
-	{
-		if (steep)
-		{
-			plot(std::floor(intery), i, rfpart(intery));
-			plot(std::floor(intery) + 1, i, fpart(intery));
-		}
-		else
-		{
-			plot(i, std::floor(intery), rfpart(intery));
-			plot(i, std::floor(intery) + 1, fpart(intery));
-		}
-		
-		intery += gradient;
+	case sdl2::LineMode::ALIASING:
+		bresenham_line(x0, y0, x1, y1);
+		break;
+	case sdl2::LineMode::ANTIALIASING:
+		xiaolin_line(x0, y0, x1, y1);
+		break;
+	default:
+		throw std::runtime_error("unhandled case");
 	}
 }
 
-// slow!! super slow!
 void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
 	sdl2::Align const align, sdl2::TrigQuad const stroke_quad)
 {
+	// stroke
+	
+	line(x0, y0, x1, y1);
+	line(x0, y0, x2, y2);
+	line(x1, y1, x2, y2);
+
+	// fill
+
+	auto plot = [&](int x, int y) {
+		SDL_SetRenderDrawColor(renderer.get(), fill_clr.r, fill_clr.g, fill_clr.b, fill_clr.a);
+		SDL_RenderDrawPoint(renderer.get(), x, y);
+	};
+
+	auto interpolate = [](int x0, int y0, int x1, int y1) {
+		if (x0 == x1)
+			return std::vector<int>{ y0 };
+		
+		std::vector<int> vals;
+		double a = 1.0 * (y1 - y0) / (x1 - x0);
+		double d = y0;
+		for (int i = x0; i <= x1; ++i)
+		{
+			vals.push_back(d);
+			d += a;
+		}
+
+		return vals;
+	};
+
 	if (y1 < y0)
 	{
 		std::swap(x0, x1);
@@ -173,49 +138,37 @@ void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
 		std::swap(y1, y2);
 	}
 
-	if (x0 == x1)
+	auto x01 = interpolate(y0, x0, y1, x1);
+	auto x12 = interpolate(y1, x1, y2, x2);
+	auto x02 = interpolate(y0, x0, y2, x2);
+
+	x01.pop_back();
+
+	auto x012 = x01;
+	x012.insert(x012.end(), x12.begin(), x12.end());
+
+	std::vector<int> x_left, x_right;
+	int m = x012.size() / 2;
+	if (x02[m] < x012[m])
 	{
-		std::swap(x1, x2);
-		std::swap(y1, y2);
+		x_left = x02;
+		x_right = x012;
+	}
+	else
+	{
+		x_left = x012;
+		x_right = x02;
 	}
 
 	auto tmp_stroke = stroke_clr;
+	stroke(fill_clr);
 
-	stroke(stroke_quad == sdl2::TrigQuad::TOP ? sdl2::clr_clear : tmp_stroke);
-	auto pts_01 = line_arr(x0, y0, x1, y1);
+	line_mode(sdl2::LineMode::ALIASING);
 
-	stroke(stroke_quad == sdl2::TrigQuad::MIDDLE ? sdl2::clr_clear : tmp_stroke);
-	auto pts_02 = line_arr(x0, y0, x2, y2);
+	for (int y = y0 + 2; y <= y2 - 2; ++y)
+		line(x_left[y - y0] + 1, y, x_right[y - y0] - 1, y);
 
-	stroke(stroke_quad == sdl2::TrigQuad::BOTTOM ? sdl2::clr_clear : tmp_stroke);
-	auto pts_12 = line_arr(x1, y1, x2, y2);
-
-	// y, x
-	std::map<int, int> fill_pts, o;
-
-	for (auto const& [x, y] : pts_01)
-	{
-		if (fill_pts.find(y) == fill_pts.end() || (x1 <= x0 && x > fill_pts[y]) || (x1 > x0 && x < fill_pts[y]))
-			fill_pts[y] = x;
-	}
-
-	for (auto const& [x, y] : pts_12)
-	{
-		if (fill_pts.find(y) == fill_pts.end() || (x1 <= x0 && x > fill_pts[y]) || (x1 > x0 && x < fill_pts[y]))
-			fill_pts[y] = x;
-	}
-
-	for (auto const& [x, y] : pts_02)
-	{
-		if (o.find(y) == o.end() || (x1 <= x0 && x < fill_pts[y]) || (x1 > x0 && x > fill_pts[y]))
-			o[y] = x;
-	}
-
-	for (auto const& [y, x] : o)
-	{
-		assert(fill_pts.find(y) != fill_pts.end());
-		line(fill_pts[y], y, x, y);
-	}
+	line_mode(sdl2::LineMode::ANTIALIASING);
 
 	stroke(tmp_stroke);
 }
@@ -408,7 +361,7 @@ std::pair<int, int> Screen::get_img_dim(std::string const& img)
 	}
 	
 	SDL_Point size;
-    SDL_QueryTexture(images[img].get(), NULL, NULL, &size.x, &size.y);
+	SDL_QueryTexture(images[img].get(), NULL, NULL, &size.x, &size.y);
 
 	return { size.x, size.y };
 }
@@ -568,4 +521,129 @@ std::vector<SDL_Point> Screen::line_arr(int x0, int y0, int x1, int y1)
 	}
 
 	return pts;
+}
+
+void Screen::bresenham_line(int x0, int y0, int x1, int y1)
+{
+	auto plot = [&](int x, int y) {
+		SDL_SetRenderDrawColor(renderer.get(), stroke_clr.r, stroke_clr.g, stroke_clr.b, stroke_clr.a);
+		SDL_RenderDrawPoint(renderer.get(), x, y);
+	};
+
+	int dx = std::abs(x1 - x0);
+	int sx = x0 < x1 ? 1 : -1;
+	int dy = -std::abs(y1 - y0);
+	int sy = y0 < y1 ? 1 : -1;
+	int error = dx + dy;
+	
+	while (true)
+	{
+		plot(x0, y0);
+
+		if (x0 == x1 && y0 == y1)
+			break;
+		
+		int e2 = error * 2;
+		if (e2 >= dy)
+		{
+			if (x0 == x1)
+				break;
+
+			error += dy;
+			x0 = x0 + sx;
+		}
+
+		if (e2 <= dx)
+		{
+			if (y0 == y1)
+				break;
+
+			error += dx;
+			y0 = y0 + sy;
+		}
+	}
+}
+
+void Screen::xiaolin_line(int x0, int y0, int x1, int y1)
+{
+	auto plot = [&](double x, double y, double a) {
+		SDL_SetRenderDrawColor(renderer.get(), stroke_clr.r, stroke_clr.g, stroke_clr.b, stroke_clr.a * a);
+		SDL_RenderDrawPoint(renderer.get(), (int)x, (int)y);
+	};
+
+	auto round = [&](double x) { return std::floor(x + 0.5); };
+	auto fpart = [](double x) { return x - floor(x); };
+	auto rfpart = [&](double x) { return 1 - fpart(x); };
+
+	bool steep = std::abs(y1 - y0) > std::abs(x1 - x0);
+
+	if (steep)
+	{
+		std::swap(x0, y0);
+		std::swap(x1, y1);
+	}
+	if (x0 > x1)
+	{
+		std::swap(x0, x1);
+		std::swap(y0, y1);
+	}
+
+	double dx = x1 - x0;
+	double dy = y1 - y0;
+
+	double gradient = 0;
+	if (dx == 0)
+		gradient = 1.0;
+	else
+		gradient = dy / dx;
+
+	double xend = round(x0);
+	double yend = y0 + gradient * (xend - x0);
+	double xgap = rfpart(x0 + 0.5);
+	double xpxl1 = xend;
+	double ypxl1 = std::floor(yend);
+	if (steep)
+	{
+		plot(ypxl1, xpxl1, rfpart(yend) * xgap);
+		plot(ypxl1 + 1, xpxl1, fpart(yend) * xgap);
+	}
+	else
+	{
+		plot(xpxl1, ypxl1, rfpart(yend) * xgap);
+		plot(xpxl1, ypxl1 + 1, fpart(yend) * xgap);
+	}
+
+	double intery = yend + gradient;
+
+	xend = round(x1);
+	yend = y1 + gradient * (xend - x1);
+	xgap = fpart(x1 + 0.5);
+	double xpxl2 = xend;
+	double ypxl2 = std::floor(yend);
+	if (steep)
+	{
+		plot(ypxl2, xpxl2, rfpart(yend) * xgap);
+		plot(ypxl2 + 1, xpxl2, fpart(yend) * xgap);
+	}
+	else
+	{
+		plot(xpxl2, ypxl2, rfpart(yend) * xgap);
+		plot(xpxl2, ypxl2 + 1, fpart(yend) * xgap);
+	}
+
+	for (double i = xpxl1 + 1; i <= xpxl2 - 1; ++i)
+	{
+		if (steep)
+		{
+			plot(std::floor(intery), i, rfpart(intery));
+			plot(std::floor(intery) + 1, i, fpart(intery));
+		}
+		else
+		{
+			plot(i, std::floor(intery), rfpart(intery));
+			plot(i, std::floor(intery) + 1, fpart(intery));
+		}
+
+		intery += gradient;
+	}
 }

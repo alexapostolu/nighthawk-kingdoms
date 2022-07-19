@@ -28,6 +28,7 @@ public:
 	void fill(SDL_Color const& clr);
 	void fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void stroke(SDL_Color const& clr);
+	void line_mode(sdl2::LineMode const& mode);
 
 	// Xiaolin Wu's algorithm
 	void line(int x0, int y0, int x1, int y1);
@@ -71,6 +72,9 @@ private:
 	void set_render_fill_colour(int r, int g, int b, int a);
 	void set_render_stroke_colour(int r, int g, int b, int a);
 
+	void bresenham_line(int x0, int y0, int x1, int y1);
+	void xiaolin_line(int x0, int y0, int x1, int y1);
+
 private:
 	sdl2::window_ptr window;
 	sdl2::renderer_ptr renderer;
@@ -81,4 +85,8 @@ private:
 	SDL_Color stroke_clr;
 
 	int stroke_weight;
+
+	sdl2::LineMode m_line_mode;
+
+	// StrokeAlign stroke_align;
 };

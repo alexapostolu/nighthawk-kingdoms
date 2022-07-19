@@ -43,6 +43,12 @@ enum class Align
 	LEFT, CENTER, RIGHT
 };
 
+enum class LineMode
+{
+	ALIASING,
+	ANTIALIASING
+};
+
 enum class CircleQuad
 {
 	ALL,

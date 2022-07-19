@@ -34,8 +34,7 @@ void Building::display_backdrop(SDL_Color const& clr) const
 	int h = height_d * 20;
 	Screen::get().fill(clr);
 	Screen::get().stroke(sdl2::clr_clear);
-	Screen::get().rhom(dim.x, dim.y, rect_w, rect_h,
-		sdl2::Align::CENTER);
+	Screen::get().rhom(dim.x, dim.y, rect_w, rect_h, sdl2::Align::CENTER);
 }
 
 void Building::display_placement_options() const
