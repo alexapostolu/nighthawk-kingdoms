@@ -38,16 +38,27 @@ double rand_dbl(double const lb, double const ub);
 
 // text fonts, colours, and alignment
 
-enum class Align
-{
-	LEFT, CENTER, RIGHT
-};
-
 enum class LineMode
 {
 	ALIASING,
 	ANTIALIASING
 };
+
+enum class TrigAlign
+{
+	CENTER
+};
+
+enum class RectAlign
+{
+	CORNERS,
+	CENTER,
+	CENTER_LEFT,
+	CENTER_RIGHT
+};
+
+using ImageAlign = RectAlign;
+using TextAlign = RectAlign;
 
 enum class CircleQuad
 {
@@ -73,13 +84,13 @@ struct Dimension
 
 struct Text
 {
-	Text(std::string const& _text, int _x, int _y, Align _align);
+	Text(std::string const& _text, int _x, int _y, TextAlign _align);
 	bool clicked_on(int mx, int my);
 	void display();
 
 	std::string text;
 	Dimension dim;
-	Align align;
+	RectAlign align;
 };
 
 std::string const str_brygada = "../assets/brygada.ttf";

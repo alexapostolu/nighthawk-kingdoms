@@ -37,7 +37,7 @@ double rand_dbl(double const lb, double const ub)
 	return dist(eng);
 }
 
-Text::Text(std::string const& _text, int _x, int _y, Align _align)
+Text::Text(std::string const& _text, int _x, int _y, TextAlign _align)
 	: text(_text), dim({ _x, _y, 0, 0 }), align(_align)
 {
 	TTF_Init();
@@ -50,13 +50,13 @@ bool Text::clicked_on(int mx, int my)
 {
 	switch (align)
 	{
-	case Align::LEFT:
+	case TextAlign::CENTER_LEFT:
 		return mx >= dim.x && mx <= dim.x + dim.w &&
 			   my >= dim.y && my <= dim.y + dim.h;
-	case Align::CENTER:
+	case TextAlign::CENTER:
 		return mx >= dim.x - (dim.w / 2) && mx <= dim.x + (dim.w / 2) &&
 			   my >= dim.y - (dim.h / 2) && my <= dim.y + (dim.h / 2);
-	case Align::RIGHT:
+	case TextAlign::CENTER_RIGHT:
 		return mx >= dim.x - dim.w && mx <= dim.x &&
 			   my >= dim.y && my <= dim.y + dim.h;
 	default:

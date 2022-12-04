@@ -14,12 +14,12 @@ int main(int argc, char* argv[])
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		std::cout << "error - failed to initialize SDL\n" << SDL_GetError();
+		std::cout << "error - failed to initialize SDL\n    " << SDL_GetError();
 		return 1;
 	}
 	if (TTF_Init() == -1)
 	{
-		std::cout << "error - failed to initialize TTF\n" << TTF_GetError();
+		std::cout << "error - failed to initialize TTF\n    " << TTF_GetError();
 		return 1;
 	}
 	

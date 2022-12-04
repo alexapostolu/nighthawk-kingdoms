@@ -25,20 +25,24 @@ Screen::Screen()
 
 void Screen::set_window()
 {
-	window.reset(SDL_CreateWindow("Nighthawk - Kingdoms",
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		1170, 525, 0), [](auto p) { SDL_DestroyWindow(p); });
+	window.reset(
+		SDL_CreateWindow("Nighthawk - Kingdoms",
+						 SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+						 SCREEN_WIDTH, SCREEN_HEIGHT, 0),
+		[](auto p) { SDL_DestroyWindow(p); }
+	);
 
 	if (!window)
 	{
-		std::cout << "error - failed to open window\n" << SDL_GetError();
+		std::cout << "error - failed to open window\n    " << SDL_GetError();
 		return;
 	}
 
 	renderer.reset(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED));
+
 	if (!renderer)
 	{
-		std::cout << "error - failed to create renderer\n" << SDL_GetError();
+		std::cout << "error - failed to create renderer\n    " << SDL_GetError();
 		return;
 	}
 
@@ -52,7 +56,11 @@ void Screen::update()
 
 void Screen::clear()
 {
-	image("grass.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, sdl2::Align::LEFT);
+	auto p_mode = m_rect_align;
+
+	rect_align(sdl2::RectAlign::CORNERS);
+	image("grass.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	rect_align(p_mode);
 }
 
 void Screen::fill(SDL_Color const& clr)
@@ -60,7 +68,7 @@ void Screen::fill(SDL_Color const& clr)
 	fill_clr = clr;
 }
 
-void Screen::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+void Screen::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
 	fill_clr = SDL_Color{ r, g, b, a };
 }
@@ -70,20 +78,15 @@ void Screen::stroke(SDL_Color const& clr)
 	stroke_clr = clr;
 }
 
-void Screen::line_mode(sdl2::LineMode const& mode)
-{
-	m_line_mode = mode;
-}
-
 void Screen::line(int x0, int y0, int x1, int y1)
 {
 	switch (m_line_mode)
 	{
 	case sdl2::LineMode::ALIASING:
-		bresenham_line(x0, y0, x1, y1);
+		line_aliase(x0, y0, x1, y1);
 		break;
 	case sdl2::LineMode::ANTIALIASING:
-		xiaolin_line(x0, y0, x1, y1);
+		line_antialiase(x0, y0, x1, y1);
 		break;
 	default:
 		throw std::runtime_error("unhandled case");
@@ -91,7 +94,7 @@ void Screen::line(int x0, int y0, int x1, int y1)
 }
 
 void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
-	sdl2::Align const align, sdl2::TrigQuad const stroke_quad)
+	sdl2::TrigQuad const stroke_quad)
 {
 	// stroke
 	
@@ -161,8 +164,8 @@ void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
 	}
 
 	auto tmp_stroke = stroke_clr;
-	stroke(fill_clr);
 
+	stroke(fill_clr);
 	line_mode(sdl2::LineMode::ALIASING);
 
 	for (int y = y0 + 2; y <= y2 - 2; ++y)
@@ -173,27 +176,9 @@ void Screen::trig(int x0, int y0, int x1, int y1, int x2, int y2,
 	stroke(tmp_stroke);
 }
 
-void Screen::rect(int x, int y, int w, int h,
-	sdl2::Align alignment)
+void Screen::rect(int x, int y, int w, int h)
 {
-	SDL_Rect rect{ 0, 0, w, h };
-	switch (alignment)
-	{
-	case sdl2::Align::LEFT:
-		rect.x = x;
-		rect.y = y;
-		break;
-	case sdl2::Align::CENTER:
-		rect.x = x - (rect.w / 2);
-		rect.y = y - (rect.h / 2);
-		break;
-	case sdl2::Align::RIGHT:
-		rect.x = x - (rect.w);
-		rect.y = y;
-		break;
-	default:
-		throw std::runtime_error("unhandled statement");
-	};
+	SDL_Rect rect = rect_align_coords(m_rect_align, x, y, w, h);
 
 	SDL_SetRenderDrawColor(renderer.get(), fill_clr.r, fill_clr.g, fill_clr.b, fill_clr.a);
 	SDL_RenderFillRect(renderer.get(), &rect);
@@ -202,26 +187,26 @@ void Screen::rect(int x, int y, int w, int h,
 	SDL_RenderDrawRect(renderer.get(), &rect);
 }
 
-void Screen::rect(int x, int y, int w, int h, int r, sdl2::Align alignment)
+void Screen::rect(int x, int y, int w, int h, int r)
 {
 	if (r > w / 2 || r > h / 2)
 		throw std::runtime_error("radius too large");
 
 	auto tmp_stroke = stroke_clr;
 
-	switch (alignment)
+	switch (m_rect_align)
 	{
-	case sdl2::Align::CENTER: {
+	case sdl2::RectAlign::CENTER: {
 		stroke(sdl2::clr_clear);
-		rect(x, y, w - (r * 2), h, alignment);
-		rect(x - (w / 2) + (r / 2), y, r, h - (r * 2), alignment);
-		rect(x + (w / 2) - (r / 2) - 1, y, r + 0, h - (r * 2), alignment);
+		rect(x, y, w - (r * 2), h);
+		rect(x - (w / 2) + (r / 2), y, r, h - (r * 2));
+		rect(x + (w / 2) - (r / 2) - 1, y, r + 0, h - (r * 2));
 		
 		stroke(tmp_stroke);
-		circle(x - ((w / 2) - r) - 1, y - ((h / 2) - r) - 1, r + 1, alignment, sdl2::CircleQuad::TOP_LEFT);
-		circle(x + ((w / 2) - r) - 1, y - ((h / 2) - r) - 1, r + 1, alignment, sdl2::CircleQuad::TOP_RIGHT);
-		circle(x - ((w / 2) - r) - 1, y + ((h / 2) - r) - 1, r + 1, alignment, sdl2::CircleQuad::BOTTOM_LEFT);
-		circle(x + ((w / 2) - r) - 1, y + ((h / 2) - r) - 1, r + 1, alignment, sdl2::CircleQuad::BOTTOM_RIGHT);
+		circle(x - ((w / 2) - r) - 1, y - ((h / 2) - r) - 1, r + 1, sdl2::CircleQuad::TOP_LEFT);
+		circle(x + ((w / 2) - r) - 1, y - ((h / 2) - r) - 1, r + 1, sdl2::CircleQuad::TOP_RIGHT);
+		circle(x - ((w / 2) - r) - 1, y + ((h / 2) - r) - 1, r + 1, sdl2::CircleQuad::BOTTOM_LEFT);
+		circle(x + ((w / 2) - r) - 1, y + ((h / 2) - r) - 1, r + 1, sdl2::CircleQuad::BOTTOM_RIGHT);
 
 		stroke(tmp_stroke);
 		line(x - (w / 2) - 2, y - (h / 2) + r, x - (w / 2) - 2, y + (h / 2) - r);
@@ -241,17 +226,14 @@ void Screen::rect(int x, int y, int w, int h, int r, sdl2::Align alignment)
 	stroke(tmp_stroke);
 }
 
-void Screen::rhom(int x, int y, int w, int h, sdl2::Align align)
+void Screen::rhom(int x, int y, int w, int h)
 {
-	trig(x - (w / 2), y, x, y - (h / 2), x, y + (h / 2),
-		sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
-
-	trig(x + (w / 2), y, x, y - (h / 2), x, y + (h / 2),
-		sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
+	trig(x - (w / 2), y, x, y - (h / 2), x, y + (h / 2), sdl2::TrigQuad::MIDDLE);
+	trig(x + (w / 2), y, x, y - (h / 2), x, y + (h / 2), sdl2::TrigQuad::MIDDLE);
 }
 
 void Screen::circle(int const x, int const y, int const r,
-	sdl2::Align alignment, sdl2::CircleQuad quad)
+	sdl2::CircleQuad quad)
 {
 	int w1, w2, h1, h2;
 	switch (quad)
@@ -317,33 +299,14 @@ void Screen::circle(int const x, int const y, int const r,
 	}
 }
 
-void Screen::text(std::string const& text, std::string const& font, int size,
-	int x, int y, sdl2::Align alignment)
+void Screen::text(std::string const& text, int x, int y)
 {
-	sdl2::font_ptr ttf_font(TTF_OpenFont(font.c_str(), size));
+	sdl2::font_ptr ttf_font(TTF_OpenFont(text_font.c_str(), text_size));
 	sdl2::surface_ptr text_surface(TTF_RenderText_Solid(ttf_font.get(), text.c_str(), fill_clr));
 	sdl2::texture_ptr text_texture(SDL_CreateTextureFromSurface(renderer.get(), text_surface.get()));
 
-	SDL_Rect text_rect;
+	SDL_Rect text_rect = rect_align_coords(m_text_align, x, y);
 	TTF_SizeText(ttf_font.get(), text.c_str(), &text_rect.w, &text_rect.h);
-
-	switch (alignment)
-	{
-	case sdl2::Align::LEFT:
-		text_rect.x = x;
-		text_rect.y = y;
-		break;
-	case sdl2::Align::CENTER:
-		text_rect.x = x - (text_rect.w / 2);
-		text_rect.y = y;
-		break;
-	case sdl2::Align::RIGHT:
-		text_rect.x = x - (text_rect.w);
-		text_rect.y = y;
-		break;
-	default:
-		throw std::runtime_error("unhandled statement");
-	};
 	
 	SDL_RenderCopy(renderer.get(), text_texture.get(), NULL, &text_rect);
 }
@@ -366,10 +329,9 @@ std::pair<int, int> Screen::get_img_dim(std::string const& img)
 	return { size.x, size.y };
 }
 
-void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Align alignment, int alpha)
+void Screen::image(std::string const& img, int x, int y, int w, int h, int alpha)
 {
-	auto const it = images.find(img);
-	if (it == images.end())
+	if (images.find(img) == images.end())
 	{
 		sdl2::surface_ptr image(IMG_Load(std::string("../assets/" + img).c_str()));
 		if (image == nullptr)
@@ -378,58 +340,30 @@ void Screen::image(std::string const& img, int x, int y, int w, int h, sdl2::Ali
 		images[img] = sdl2::texture_ptr(SDL_CreateTextureFromSurface(renderer.get(), image.get()));
 	}
 
-	SDL_Rect rect{ x, y, w, h };
-	switch (alignment)
-	{
-	case sdl2::Align::LEFT:
-		rect.x = x;
-		rect.y = y;
-		break;
-	case sdl2::Align::CENTER:
-		rect.x = x - (w / 2);
-		rect.y = y - (h / 2);
-		break;
-	case sdl2::Align::RIGHT:
-		rect.x = x - w;
-		rect.y = y;
-		break;
-	};
+	SDL_Rect rect = rect_align_coords(m_image_align, x, y, w, h);
 
 	SDL_SetTextureAlphaMod(images[img].get(), alpha);
 	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
 }
 
-void Screen::image(std::string const& img, sdl2::Dimension const& dim, sdl2::Align alignment, int alpha)
+void Screen::image(std::string const& img, sdl2::Dimension const& dim, int alpha)
 {
-	auto const it = images.find(img);
-	if (it == images.end())
-	{
-		sdl2::surface_ptr image(IMG_Load(std::string("../assets/" + img).c_str()));
-		if (image == nullptr)
-			std::cout << "[error] - image '" + img + "' could not load\n";
+	image(img, dim.x, dim.y, dim.w, dim.h, alpha);
+}
 
-		images[img] = sdl2::texture_ptr(SDL_CreateTextureFromSurface(renderer.get(), image.get()));
-	}
+void Screen::line_mode(sdl2::LineMode const& mode)
+{
+	m_line_mode = mode;
+}
 
-	SDL_Rect rect{ dim.x, dim.y, dim.w, dim.h };
-	switch (alignment)
-	{
-	case sdl2::Align::LEFT:
-		rect.x = dim.x;
-		rect.y = dim.y;
-		break;
-	case sdl2::Align::CENTER:
-		rect.x = dim.x - (dim.w / 2);
-		rect.y = dim.y - (dim.h / 2);
-		break;
-	case sdl2::Align::RIGHT:
-		rect.x = dim.x - dim.w;
-		rect.y = dim.y;
-		break;
-	};
+void Screen::rect_align(sdl2::RectAlign const& align)
+{
+	m_rect_align = align;
+}
 
-	SDL_SetTextureAlphaMod(images[img].get(), alpha);
-	SDL_RenderCopy(renderer.get(), images[img].get(), NULL, &rect);
+void Screen::image_align(sdl2::RectAlign const& align)
+{
+	m_image_align = align;
 }
 
 std::vector<SDL_Point> Screen::line_arr(int x0, int y0, int x1, int y1)
@@ -523,7 +457,36 @@ std::vector<SDL_Point> Screen::line_arr(int x0, int y0, int x1, int y1)
 	return pts;
 }
 
-void Screen::bresenham_line(int x0, int y0, int x1, int y1)
+SDL_Rect Screen::rect_align_coords(sdl2::RectAlign align, int x, int y, int w, int h) const
+{
+	SDL_Rect rect{ -1, -1, w, h };
+
+	switch (align)
+	{
+	case sdl2::RectAlign::CORNERS:
+		rect.x = x;
+		rect.y = y;
+		break;
+	case sdl2::RectAlign::CENTER_LEFT:
+		rect.x = x;
+		rect.y = y - (rect.w / 2);
+		break;
+	case sdl2::RectAlign::CENTER:
+		rect.x = x - (rect.w / 2);
+		rect.y = y - (rect.h / 2);
+		break;
+	case sdl2::RectAlign::CENTER_RIGHT:
+		rect.x = x - rect.w;
+		rect.y = y - (rect.h / 2);
+		break;
+	default:
+		throw std::runtime_error("unhandled statement");
+	};
+
+	return rect;
+}
+
+void Screen::line_aliase(int x0, int y0, int x1, int y1)
 {
 	auto plot = [&](int x, int y) {
 		SDL_SetRenderDrawColor(renderer.get(), stroke_clr.r, stroke_clr.g, stroke_clr.b, stroke_clr.a);
@@ -564,7 +527,7 @@ void Screen::bresenham_line(int x0, int y0, int x1, int y1)
 	}
 }
 
-void Screen::xiaolin_line(int x0, int y0, int x1, int y1)
+void Screen::line_antialiase(int x0, int y0, int x1, int y1)
 {
 	auto plot = [&](double x, double y, double a) {
 		SDL_SetRenderDrawColor(renderer.get(), stroke_clr.r, stroke_clr.g, stroke_clr.b, stroke_clr.a * a);
