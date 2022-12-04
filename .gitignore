@@ -2,5 +2,6 @@ out/
 .vs/
 CMakeSettings.json
 *.pdb
-# *.exe
+*.exe
 build/kingdom.ilk
+.vscode/
