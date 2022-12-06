@@ -89,9 +89,10 @@ private:
 	sdl2::RectAlign m_rect_align;
 	sdl2::ImageAlign m_image_align;
 	sdl2::TextAlign m_text_align;
+	std::string m_text_font;
 
-	std::string text_font;
-	int text_size;
+	std::string m_text_font;
+	int m_text_size;
 
 	// StrokeAlign stroke_align;
 };

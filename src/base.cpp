@@ -28,7 +28,7 @@ Base::Base()
 	, TILES_X(58), TILES_Y(23)
 	, tiles(TILES_Y, std::vector<Tile>(TILES_X, Tile{ TileState::GRASS }))
 	, place(nullptr)
-	, text_build("BUILD", Screen::get().SCREEN_WIDTH - 20, Screen::get().SCREEN_HEIGHT - 65, sdl2::Align::RIGHT)
+	, text_build("BUILD", Screen::get().SCREEN_WIDTH - 20, Screen::get().SCREEN_HEIGHT - 65, sdl2::TextAlign::CENTER_RIGHT)
 {
 	farmers.push_back(Person{ { TILES_X / 2, TILES_Y / 2 }, { TILES_X / 2.f * 20 + 5, TILES_Y / 2.f * 20 + 60 } });
 	farmers.push_back(Person{ { TILES_X / 2 - 5, TILES_Y / 2 + 7 }, { (TILES_X / 2.f - 5 ) * 20 + 5, (TILES_Y / 2.f + 7) * 20 + 60 } });
@@ -96,11 +96,13 @@ void Base::display_resources()
 	Screen::get().fill(sdl2::clr_yellow);
 	for (int i = 0; i < sizeof(str) / sizeof(str[0]); ++i)
 	{
-		Screen::get().image(imgs[i],
-			(Screen::get().SCREEN_WIDTH / 4 * i) + margin - 10, 4, 40, 40, sdl2::Align::RIGHT);
+		Screen::get().image_align(sdl2::ImageAlign::CENTER_RIGHT);
+		Screen::get().image(imgs[i],(Screen::get().SCREEN_WIDTH / 4 * i) + margin - 10, 4, 40, 40);
 
-		Screen::get().text(str[i], sdl2::str_brygada, 24,
-			(Screen::get().SCREEN_WIDTH / 4 * i) + margin , 10, sdl2::Align::LEFT);
+		Screen::get().text_size(10);
+		Screen::get().text_font(sdl2::str_brygada);
+		Screen::get().text_align(sdl2::ImageAlign::CENTER_LEFT);
+		Screen::get().text(str[i], 24, (Screen::get().SCREEN_WIDTH / 4 * i) + margin);
 	}
 }
 

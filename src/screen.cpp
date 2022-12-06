@@ -301,7 +301,7 @@ void Screen::circle(int const x, int const y, int const r,
 
 void Screen::text(std::string const& text, int x, int y)
 {
-	sdl2::font_ptr ttf_font(TTF_OpenFont(text_font.c_str(), text_size));
+	sdl2::font_ptr ttf_font(TTF_OpenFont(m_text_font.c_str(), m_text_size));
 	sdl2::surface_ptr text_surface(TTF_RenderText_Solid(ttf_font.get(), text.c_str(), fill_clr));
 	sdl2::texture_ptr text_texture(SDL_CreateTextureFromSurface(renderer.get(), text_surface.get()));
 
@@ -365,6 +365,22 @@ void Screen::image_align(sdl2::RectAlign const& align)
 {
 	m_image_align = align;
 }
+
+void Screen::text_font(std::string const& font)
+{
+	m_text_font = font;
+}
+
+void Screen::text_size(int size)
+{
+	m_text_size = size;
+}
+
+void Screen::text_align(sdl2::TextAlign const& align)
+{
+
+}
+
 
 std::vector<SDL_Point> Screen::line_arr(int x0, int y0, int x1, int y1)
 {

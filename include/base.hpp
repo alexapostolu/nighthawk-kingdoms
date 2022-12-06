@@ -31,7 +31,7 @@ public:
 
     void handle_mouse_pressed(int x, int y);
     void handle_mouse_dragged(int x, int y);
-	void handle_mouse_released(int x, int y);
+	void handle_mouse_released(int x, int y); // dragged then released
 	
 private:
     Base();

@@ -29,21 +29,27 @@ int main(int argc, char* argv[])
 	Screen::get().set_window();
 	Base::get().set_building_dim();
 
-	int b = SDL_GetTicks(), frames = 0;
-	int c = SDL_GetTicks();
-	bool mouse_down = false;
+	Uint64 timer_second = SDL_GetTicks64();
+	
 	bool tutorial = true;
-	int timer = SDL_GetTicks();
-	int framec = 0;
+	
+	bool left_mouse_down = true;
+	Uint64 timer_mouse_drag = SDL_GetTicks64();
+
+	int frame_count = 0;
+	int fps = 0;
+	Uint64 timer_fps = SDL_GetTicks64();
+
+	short const MOUSE_DRAG_THRESHOLD = 100;
+
 	while (true)
 	{
-		frames++;
-	    if (SDL_GetTicks() - b > 1000)
+		frame_count++;
+	    if (SDL_GetTicks64() - timer_fps > 1000)
 	    {
-			//std::cout << "fps: " << frames << '\n';
-	        b = SDL_GetTicks();
-			framec = frames;
-			frames = 0;
+			timer_fps = SDL_GetTicks64();
+			fps = frame_count;
+			frame_count = 0;
 	    }
 		
 		Screen::get().clear();
@@ -53,41 +59,43 @@ int main(int argc, char* argv[])
 		{
 			switch (event.type)
 			{
-			case SDL_MOUSEBUTTONDOWN: {
+			case SDL_MOUSEBUTTONDOWN:
+			{
 				if (event.button.button != SDL_BUTTON_LEFT)
 					break;
 
-				c = SDL_GetTicks();
-				mouse_down = true;
+				left_mouse_down = true;
+				timer_mouse_drag = SDL_GetTicks64();
 
-				int x, y;
-				SDL_GetMouseState(&x, &y);
-
-				//std::cout << "mouse pos: " << x << ' ' << y << '\n';
-
-				Base::get().handle_mouse_pressed(x, y);
 				tutorial = false;
 				
 				break;
 			}
-			case SDL_MOUSEBUTTONUP: {
-				c = SDL_GetTicks();
-				mouse_down = false;
+			case SDL_MOUSEBUTTONUP:
+			{
+				if (!left_mouse_down)
+					break;
+
+				left_mouse_down = false;
 
 				int x, y;
 				SDL_GetMouseState(&x, &y);
-				Base::get().handle_mouse_released(x, y);
+
+				if (SDL_GetTicks() - timer_mouse_drag < MOUSE_DRAG_THRESHOLD)
+					Base::get().handle_mouse_pressed(x, y);
+				else
+					Base::get().handle_mouse_released(x, y);
 
 				break;
 			}
 			case SDL_QUIT:
-				goto END_SDL;
+				return 0;
 			default:
 				break;
 			}
 		}
 
-		if (mouse_down && SDL_GetTicks() - c >= 100)
+		if (left_mouse_down && SDL_GetTicks64() - timer_mouse_drag >= MOUSE_DRAG_THRESHOLD)
 		{
 			int x, y;
 			SDL_GetMouseState(&x, &y);
@@ -106,26 +114,33 @@ int main(int argc, char* argv[])
 		if (tutorial)
 		{
 			Screen::get().fill(sdl2::clr_yellow);
-			Screen::get().text("Welcome to Nighthawk: Kingdoms!", sdl2::str_brygada, 24, 120, 100, sdl2::Align::LEFT);
-			Screen::get().text("Here you can build your own kingdom and collect resources!", sdl2::str_brygada, 24, 120, 140, sdl2::Align::LEFT);
-			Screen::get().text("Click the shop button to place your first building, then you are good to go!", sdl2::str_brygada, 24, 120, 180, sdl2::Align::LEFT);
+			Screen::get().text_font(sdl2::str_brygada);
+			Screen::get().text_align(sdl2::TextAlign::CENTER_LEFT);
+
+			Screen::get().text_size(24);
+			Screen::get().text("Welcome to Nighthawk: Kingdoms!", 120, 100);
+
+			Screen::get().text_size(24);
+			Screen::get().text("Here you can build your own kingdom and collect resources!", 120, 140);
+
+			Screen::get().text_size(24);
+			Screen::get().text("Click the shop button to place your first building, then you are good to go!", 120, 180);
 		}
 
-		bool const second = SDL_GetTicks() - timer >= 1000;
-		if (second)
-			timer = SDL_GetTicks();
+		bool second_passed = SDL_GetTicks64() - timer_second >= 1000;
+		if (second_passed)
+			timer_second = SDL_GetTicks64();
 
-		Base::get().display_scene(second);
+		Base::get().display_scene(second_passed);
 		Base::get().display_shop();
 
 		Screen::get().fill(sdl2::clr_white);
-		Screen::get().text("frames: " + std::to_string(framec),
-			sdl2::str_brygada, 10, 10, Screen::get().SCREEN_HEIGHT - 20, sdl2::Align::LEFT);
+		Screen::get().text_size(10);
+		Screen::get().text_font(sdl2::str_brygada);
+		Screen::get().text_align(sdl2::TextAlign::CENTER_LEFT);
+		Screen::get().text("frames: " + std::to_string(frame_count), 10, Screen::get().SCREEN_HEIGHT - 20);
 
 
 		Screen::get().update();
 	}
-
-END_SDL:
-	return 0;
 }
