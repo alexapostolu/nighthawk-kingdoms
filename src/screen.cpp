@@ -300,7 +300,7 @@ void Screen::circle(int const x, int const y, int const r,
 }
 
 void Screen::text(std::string const& text, int x, int y)
-{
+{ 
 	sdl2::font_ptr ttf_font(TTF_OpenFont(m_text_font.c_str(), m_text_size));
 	sdl2::surface_ptr text_surface(TTF_RenderText_Solid(ttf_font.get(), text.c_str(), fill_clr));
 	sdl2::texture_ptr text_texture(SDL_CreateTextureFromSurface(renderer.get(), text_surface.get()));
@@ -309,6 +309,24 @@ void Screen::text(std::string const& text, int x, int y)
 	TTF_SizeText(ttf_font.get(), text.c_str(), &text_rect.w, &text_rect.h);
 	
 	SDL_RenderCopy(renderer.get(), text_texture.get(), NULL, &text_rect);
+}
+
+void Screen::text(sdl2::Text const& text)
+{
+	fill(text.clr);
+	text_font(text.font);
+	text_size(45);
+	text_align(text.align);
+
+	sdl2::font_ptr ttf_font(TTF_OpenFont(m_text_font.c_str(), m_text_size));
+	sdl2::surface_ptr text_surface(TTF_RenderText_Solid(ttf_font.get(), text.txt.c_str(), fill_clr));
+	sdl2::texture_ptr text_texture(SDL_CreateTextureFromSurface(renderer.get(), text_surface.get()));
+
+	SDL_Rect text_rect = rect_align_coords(text.align, text.x, text.y);
+	TTF_SizeText(ttf_font.get(), text.txt.c_str(), &text_rect.w, &text_rect.h);
+
+	SDL_RenderCopy(renderer.get(), text_texture.get(), NULL, &text_rect);
+
 }
 
 std::pair<int, int> Screen::get_img_dim(std::string const& img)
@@ -356,6 +374,11 @@ void Screen::line_mode(sdl2::LineMode const& mode)
 	m_line_mode = mode;
 }
 
+void Screen::trig_align(sdl2::TrigAlign const& align)
+{
+	m_trig_align = align;
+}
+
 void Screen::rect_align(sdl2::RectAlign const& align)
 {
 	m_rect_align = align;
@@ -378,9 +401,8 @@ void Screen::text_size(int size)
 
 void Screen::text_align(sdl2::TextAlign const& align)
 {
-
+	m_text_align = align;
 }
-
 
 std::vector<SDL_Point> Screen::line_arr(int x0, int y0, int x1, int y1)
 {

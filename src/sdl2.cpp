@@ -37,16 +37,22 @@ double rand_dbl(double const lb, double const ub)
 	return dist(eng);
 }
 
-Text::Text(std::string const& _text, int _x, int _y, TextAlign _align)
-	: text(_text), dim({ _x, _y, 0, 0 }), align(_align)
+Text::Text(sdl2::renderer_ptr& renderer, std::string const& _text, int _x, int _y, SDL_Color _clr, std::string const& _font, int _size, TextAlign _align)
+	: text(_text), dim({ _x, _y, 0, 0 }), clr(_clr), font(_font), size(_size), align(_align)
 {
 	TTF_Init();
 
 	font_ptr ptr(TTF_OpenFont(str_brygada.c_str(), 45));
 	TTF_SizeText(ptr.get(), text.c_str(), &dim.w, &dim.h);
+
+
+
+	sdl2::font_ptr ttf_font(TTF_OpenFont(_font.c_str(), _size));
+	sdl2::surface_ptr text_surface(TTF_RenderText_Solid(ttf_font.get(), text.c_str(), _clr));
+	sdl2::texture_ptr text_texture(SDL_CreateTextureFromSurface(renderer.get(), text_surface.get()));
 }
 
-bool Text::clicked_on(int mx, int my)
+bool Text::clicked_on(int mx, int my) const
 {
 	switch (align)
 	{

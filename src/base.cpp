@@ -124,8 +124,8 @@ void Base::display_scene(bool second)
 	
 	Screen::get().stroke(sdl2::clr_black);
 	Screen::get().fill(sdl2::clr_white);
-	Screen::get().trig(200, 200, 250, 150, 250, 250,
-		sdl2::Align::CENTER, sdl2::TrigQuad::MIDDLE);
+	Screen::get().trig_align(sdl2::TrigAlign::CENTER);
+	Screen::get().trig(200, 200, 250, 150, 250, 250, sdl2::TrigQuad::MIDDLE);
 }
 
 void Base::display_shop()
@@ -140,8 +140,10 @@ void Base::display_shop()
 		if (place == nullptr)
 		{
 			Screen::get().fill(sdl2::clr_white);
-			Screen::get().text("BUILD", sdl2::str_brygada, 45,
-				text_build.dim.x, text_build.dim.y, text_build.align);
+			Screen::get().text_font(sdl2::str_brygada);
+			Screen::get().text_size(45);
+			Screen::get().text_align(text_build.align);
+			Screen::get().text("BUILD", text_build.dim.x, text_build.dim.y);
 		}
 
 		shop_y = Screen::get().SCREEN_HEIGHT;

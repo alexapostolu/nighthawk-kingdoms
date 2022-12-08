@@ -46,7 +46,8 @@ enum class LineMode
 
 enum class TrigAlign
 {
-	CENTER
+	CENTER,
+	CORNERS
 };
 
 enum class RectAlign
@@ -84,13 +85,17 @@ struct Dimension
 
 struct Text
 {
-	Text(std::string const& _text, int _x, int _y, TextAlign _align);
-	bool clicked_on(int mx, int my);
-	void display();
+	Text(sdl2::renderer_ptr& renderer, std::string const& _text, int _x, int _y, SDL_Color _clr, std::string const& _font, int _size, TextAlign _align);
+	bool clicked_on(int mx, int my) const;
 
-	std::string text;
-	Dimension dim;
+	std::string txt;
+	int x, y;
+	SDL_Color clr;
+	std::string font;
+	int size;
 	RectAlign align;
+
+	sdl2::texture_ptr texture;
 };
 
 std::string const str_brygada = "../assets/brygada.ttf";

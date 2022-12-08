@@ -46,6 +46,7 @@ public:
 		sdl2::CircleQuad quad = sdl2::CircleQuad::ALL);
 
 	void text(std::string const& text, int x, int y);
+	void text(sdl2::Text const& text);
 
 	std::pair<int, int> get_img_dim(std::string const& img);
 	void image(std::string const& img, int x, int y, int w, int h, int alpha = 255);
@@ -54,6 +55,7 @@ public:
 
 	void line_mode(sdl2::LineMode const& mode);
 	void rect_align(sdl2::RectAlign const& align);
+	void trig_align(sdl2::TrigAlign const& align);
 	void image_align(sdl2::ImageAlign const& align);
 	void text_font(std::string const& font);
 	void text_size(int size);
@@ -86,6 +88,7 @@ private:
 	int stroke_weight;
 
 	sdl2::LineMode m_line_mode;
+	sdl2::TrigAlign m_trig_align;
 	sdl2::RectAlign m_rect_align;
 	sdl2::ImageAlign m_image_align;
 	sdl2::TextAlign m_text_align;
